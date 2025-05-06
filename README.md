@@ -1,5 +1,8 @@
 # Scooter Rideshare Demo
 
+* API: https://github.com/steveandroulakis/scooter-demo-api
+* Backend: https://github.com/tomwheeler/ss-demo-wip/tree/tom-updates-to-stripe-sessions (TODO update repo)
+
 A playful browser-based demo that simulates a scooter rideshare experience with a 2D side-scrolling game interface. This demo showcases how Temporal-backed ride workflows can be integrated into a modern web application.
 
 ## Features
