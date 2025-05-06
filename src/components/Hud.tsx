@@ -31,6 +31,8 @@ export default function Hud() {
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [scooterId, setScooterId] = useState(() => Math.floor(1000 + Math.random() * 9000).toString());
+  const [scooterIdError, setScooterIdError] = useState('');
   const [isRideActive, setIsRideActive] = useState(false);
   const [localElapsedSeconds, setLocalElapsedSeconds] = useState(0);
   // Local state to store the distance reported by the server, for reference or future reconciliation
@@ -71,14 +73,27 @@ export default function Hud() {
     return true;
   };
 
+  // Add scooter ID validation function
+  const validateScooterId = (id: string): boolean => {
+    if (!id.trim()) {
+      setScooterIdError('Please enter a scooter ID');
+      return false;
+    }
+    setScooterIdError('');
+    return true;
+  };
+
   // Mutation to start a ride
   const start = useMutation({
     mutationFn: async () => {
       if (!validateEmail(email)) {
         throw new Error('Invalid email format');
       }
-      console.log('Starting ride for email:', email);
-      return startRide(email);
+      if (!validateScooterId(scooterId)) {
+        throw new Error('Invalid scooter ID');
+      }
+      console.log('Starting ride for email:', email, 'scooter:', scooterId);
+      return startRide(scooterId);
     },
     onSuccess: (dataResponse) => { // Renamed 'data' to 'dataResponse'
       reset(); // CRITICAL: Resets distance, tokens, elapsed in store to 0/"00:00"
@@ -237,6 +252,32 @@ export default function Hud() {
       <div className="space-y-2">
         <p className="text-center text-sm text-gray-600 min-h-[20px]">{rideStatusMessage}</p> {/* Added min-height */}
       </div>
+
+      {/* Scooter ID Input: Show if not active, not starting, and summary isn't demanding full attention */}
+      {!isRideActive && !start.isPending && !showSummary && (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <label htmlFor="scooterId" className="text-sm text-gray-600 whitespace-nowrap">Scooter ID:</label>
+            <input
+              id="scooterId"
+              type="text"
+              placeholder="e.g. 5555"
+              className={`input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800 ${
+                scooterIdError ? 'border-red-500' : ''
+              }`}
+              value={scooterId}
+              onChange={(e) => {
+                setScooterId(e.target.value);
+                setScooterIdError(''); // Clear error when user types
+              }}
+              disabled={isRideActive || start.isPending}
+            />
+          </div>
+          {scooterIdError && (
+            <p className="text-red-500 text-sm mt-1">{scooterIdError}</p>
+          )}
+        </div>
+      )}
 
       {/* Email Input: Show if not active, not starting, and summary isn't demanding full attention */}
       {!isRideActive && !start.isPending && !showSummary && (
