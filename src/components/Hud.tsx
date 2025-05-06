@@ -71,7 +71,7 @@ export default function Hud() {
       </button>
 
       <div className="mt-6 space-y-1">
-        <Stat label="Distance (km)" value={distance.toFixed(2)} />
+        <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
         <Stat label="Time" value={elapsed} />
         <Stat label="Cost (tokens)" value={tokens.toFixed(1)} />
       </div>

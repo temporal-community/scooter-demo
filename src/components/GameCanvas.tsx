@@ -11,11 +11,11 @@ class RideScene extends Phaser.Scene {
   private rider!: Phaser.GameObjects.Sprite;
   private bg!: Phaser.GameObjects.TileSprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private distanceKm = 0;
+  private distanceFeet = 0;
   private readonly setDistance = useRideStore.getState().setDistance;
 
   // Configurable rider scale and vertical position
-  private readonly riderScale = 2.5; // Change this value to scale the rider
+  private readonly riderScale = 0.83; // Adjusted for 144px sprites (was 2.5 for 48px sprites)
   private readonly riderYPercent = 0.65; // Change this value to move the rider up/down (0 = top, 1 = bottom)
 
   constructor() {
@@ -26,8 +26,8 @@ class RideScene extends Phaser.Scene {
     // Swap these paths for your own sprite sheet / background
     this.load.image('bg', '/assets/bg.png');
     this.load.spritesheet('rider', '/assets/rider.png', {
-      frameWidth: 48,
-      frameHeight: 48,
+      frameWidth: 144,
+      frameHeight: 144,
     });
 
     // Add loading error handlers
@@ -86,9 +86,9 @@ class RideScene extends Phaser.Scene {
     // Keep rider in fixed position, only scroll background
     this.bg.tilePositionX += dx;
 
-    // 100 px ≈ 1 km demo scale
-    this.distanceKm += dx / 100;
-    this.setDistance(this.distanceKm);
+    // 100 px ≈ 20 feet (more realistic scale)
+    this.distanceFeet += dx / 5;
+    this.setDistance(this.distanceFeet);
   }
 }
 
