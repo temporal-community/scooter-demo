@@ -1,5 +1,8 @@
 # Temporal Scooter Rideshare Demo API
 
+**NOTE: This demo requires the frontend and backend to be running.**
+
+Found here:
 * Frontend: https://github.com/steveandroulakis/scooter-demo-frontend
 * Backend: https://github.com/tomwheeler/ss-demo-wip/tree/tom-updates-to-stripe-sessions (TODO update repo)
 
@@ -40,12 +43,6 @@ TEMPORAL_PORT=7233
 Development mode with hot reload:
 ```bash
 npm run dev
-```
-
-Production mode:
-```bash
-npm run build
-npm start
 ```
 
 ## API Endpoints
