@@ -30,6 +30,7 @@ export default function Hud() {
   } = useRideStore();
 
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [isRideActive, setIsRideActive] = useState(false);
   const [localElapsedSeconds, setLocalElapsedSeconds] = useState(0);
   // Local state to store the distance reported by the server, for reference or future reconciliation
@@ -56,11 +57,28 @@ export default function Hud() {
     };
   }, [isRideActive]);
 
+  // Add email validation function
+  const validateEmail = (email: string): boolean => {
+    if (!email.trim()) {
+      setEmailError('Please enter an email address');
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError('Please enter a valid email address');
+      return false;
+    }
+    return true;
+  };
+
   // Mutation to start a ride
   const start = useMutation({
     mutationFn: async () => {
+      if (!validateEmail(email)) {
+        throw new Error('Invalid email format');
+      }
       console.log('Starting ride for email:', email);
-      return startRide(email); // Assumes scooterId is derived from email in API
+      return startRide(email);
     },
     onSuccess: (dataResponse) => { // Renamed 'data' to 'dataResponse'
       reset(); // CRITICAL: Resets distance, tokens, elapsed in store to 0/"00:00"
@@ -222,14 +240,24 @@ export default function Hud() {
 
       {/* Email Input: Show if not active, not starting, and summary isn't demanding full attention */}
       {!isRideActive && !start.isPending && !showSummary && (
-        <input
-          type="email"
-          placeholder="maria@example.com"
-          className="input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800" // Enhanced styling
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isRideActive || start.isPending}
-        />
+        <div className="space-y-1">
+          <input
+            type="email"
+            placeholder="maria@example.com"
+            className={`input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800 ${
+              emailError ? 'border-red-500' : ''
+            }`}
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailError(''); // Clear error when user types
+            }}
+            disabled={isRideActive || start.isPending}
+          />
+          {emailError && (
+            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+          )}
+        </div>
       )}
 
       {/* Unlock Scooter Button: Show if not active, not starting, and summary isn't demanding full attention */}
@@ -237,14 +265,12 @@ export default function Hud() {
         <button
           className="w-full bg-indigo-600 hover:bg-indigo-700 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
           onClick={() => {
-            if (email.trim() === '') {
-              console.warn('Please enter an email address.');
-              alert('Please enter an email address.');
+            if (!validateEmail(email)) {
               return;
             }
             start.mutate();
           }}
-          disabled={isRideActive || start.isPending || email.trim() === ''}
+          disabled={isRideActive || start.isPending}
         >
           Unlock Scooter
         </button>
