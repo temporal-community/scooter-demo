@@ -1,5 +1,5 @@
 interface RideStateResponse {
-  distanceKm: number;
+  distanceFt: number;
   elapsedSeconds: number;
   tokens: number;
 }
@@ -13,6 +13,7 @@ interface StartRideResponse {
 export async function startRide(scooterId: string): Promise<StartRideResponse> {
   // placeholder for POST /ride/start
   const workflowId = `scooter-session-${scooterId}`;
+  console.log('startRide called for workflow:', workflowId);
   return { 
     rideId: 'demo', 
     startedAt: Date.now(),
@@ -26,11 +27,12 @@ export async function endRide(workflowId: string) {
   return { tokens: 12.3 };
 }
 
+let lastDistanceFt = 0;
 export async function getRideState(workflowId: string): Promise<RideStateResponse> {
-  // would normally GET /ride/state
-  console.log('getRideState called for workflow:', workflowId);
+  // Simulate a ride that moves forward by 1 foot per call
+  lastDistanceFt += 1;
   return {
-    distanceKm: Math.floor(Math.random() * 100),
+    distanceFt: lastDistanceFt,
     elapsedSeconds: Math.floor(Math.random() * 3600),
     tokens: Math.floor(Math.random() * 50)
   };
