@@ -4,12 +4,12 @@
  */
 
 // Workflow Names
-export const WORKFLOW_SCOOTER_RIDE = 'scooter-session-'; // Replace with your actual workflow name
+export const WORKFLOW_SCOOTER_RIDE = 'ScooterRideWorkflow';
 
 // Signal Names
-export const SIGNAL_END_RIDE = 'endRideSignal';             // Replace with your actual signal name for ending a ride
-export const SIGNAL_ADD_DISTANCE = 'addDistanceSignal';     // Replace with your actual signal name for adding distance
+export const SIGNAL_END_RIDE = 'endRideSignal';
+export const SIGNAL_ADD_DISTANCE = 'addDistanceSignal';
 
 // Query Names
-export const QUERY_GET_RIDE_DETAILS = 'getRideDetailsQuery'; // Replace with your actual query name for ride state
+export const QUERY_TOKENS_CONSUMED = 'tokensConsumed';
  

@@ -5,7 +5,7 @@ import {
   startScooterWorkflow,
   endRideWorkflow,
   addDistanceToWorkflow,
-  getRideStateFromWorkflow
+  getTokensConsumed
 } from './temporalClient';
 import { getEnvConfig } from './env';
 import {
@@ -110,8 +110,8 @@ router.get('/ride/state/:workflowId', asyncHandler(async (req: Request, res: Res
     return res.status(400).json({ message: 'workflowId path parameter is required.' });
   }
 
-  const state: RideStateResponse = await getRideStateFromWorkflow(client, workflowId);
-  res.status(200).json(state);
+  const tokensConsumed = await getTokensConsumed(client, workflowId);
+  res.status(200).json({ tokensConsumed });
 }));
 
 /**

@@ -2,16 +2,18 @@ import fs from 'fs/promises';
 import { Connection, Client, WorkflowHandle, WorkflowNotFoundError } from '@temporalio/client';
 import { getEnvConfig, EnvConfig } from './env';
 import {
-  ScooterRideWorkflowArgs,
-  ScooterRideQueryState,
-  // AddDistanceSignalArgs // Uncomment if your signal takes args
-} from './interfaces';
-import {
   WORKFLOW_SCOOTER_RIDE,
   SIGNAL_ADD_DISTANCE,
   SIGNAL_END_RIDE,
-  QUERY_GET_RIDE_DETAILS
+  QUERY_TOKENS_CONSUMED
 } from './workflows';
+
+// --- Input type ---
+export interface RideDetails {
+  emailAddress: string; // what the user provides to us
+  scooterId: string;
+  customerId?: string;  // what we look up from Stripe (based on the email address)
+}
 
 let temporalClient: Client | null = null;
 
@@ -91,7 +93,7 @@ export async function getTemporalClient(): Promise<Client> {
 export async function startScooterWorkflow(
   client: Client,
   taskQueue: string,
-  args: ScooterRideWorkflowArgs,
+  args: RideDetails,
   workflowId: string
 ): Promise<WorkflowHandle> {
   console.log(`Starting workflow ${WORKFLOW_SCOOTER_RIDE} with ID: ${workflowId} on task queue: ${taskQueue}`);
@@ -168,7 +170,15 @@ export async function queryWorkflow<TResult>(
   }
 }
 
-// Specific interaction functions for scooter ride workflows
+/**
+ * Gets the number of tokens consumed during the ride by querying the workflow.
+ * @param client - The Temporal Client instance.
+ * @param workflowId - The ID of the workflow representing the ride.
+ * @returns A Promise resolving to the number of tokens consumed.
+ */
+export async function getTokensConsumed(client: Client, workflowId: string): Promise<number> {
+  return queryWorkflow<number>(client, workflowId, QUERY_TOKENS_CONSUMED);
+}
 
 /**
  * Ends a scooter ride by signaling the workflow.
@@ -183,23 +193,10 @@ export async function endRideWorkflow(client: Client, workflowId: string): Promi
  * Adds distance to a scooter ride by signaling the workflow.
  * @param client - The Temporal Client instance.
  * @param workflowId - The ID of the workflow representing the ride.
- * // @param distance - The distance to add (if your signal takes arguments)
  */
 export async function addDistanceToWorkflow(
   client: Client,
   workflowId: string
-  // distance?: number // Example: if your signal takes an argument
 ): Promise<void> {
-  // const signalArgs = distance !== undefined ? [{ distanceToAddFt: distance }] : []; // Adjust if signal takes args
-  await signalWorkflow(client, workflowId, SIGNAL_ADD_DISTANCE /*, signalArgs */);
-}
-
-/**
- * Gets the current state of a scooter ride by querying the workflow.
- * @param client - The Temporal Client instance.
- * @param workflowId - The ID of the workflow representing the ride.
- * @returns A Promise resolving to the ride state.
- */
-export async function getRideStateFromWorkflow(client: Client, workflowId: string): Promise<ScooterRideQueryState> {
-  return queryWorkflow<ScooterRideQueryState>(client, workflowId, QUERY_GET_RIDE_DETAILS);
+  await signalWorkflow(client, workflowId, SIGNAL_ADD_DISTANCE);
 }
