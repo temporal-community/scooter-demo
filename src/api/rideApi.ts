@@ -5,6 +5,7 @@ export async function startRide() {
   
   export async function endRide() {
     // placeholder for POST /ride/end
+    console.log('endRide called');
     return { tokens: 12.3 };
   }
   

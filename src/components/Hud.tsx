@@ -24,17 +24,42 @@ export default function Hud() {
 
   const [email, setEmail] = useState('');
   const [isRideActive, setIsRideActive] = useState(false);
-  const rideIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [localElapsedSeconds, setLocalElapsedSeconds] = useState(0);
+  const [currentDistance, setCurrentDistance] = useState(0);
+  const lastDistanceMilestoneRef = useRef<number>(0);
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  // Timer effect
+  useEffect(() => {
+    if (isRideActive) {
+      // Start the timer
+      timerRef.current = setInterval(() => {
+        setLocalElapsedSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      // Clear the timer when ride is not active
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isRideActive]);
 
   const start = useMutation({
     mutationFn: async () => {
-      // In a real app, you might pass the email to startRide
-      // For now, we'll just log it as it's not used by the mock API
       console.log('Starting ride for email:', email);
       return startRide();
     },
     onSuccess: () => {
       reset();
+      setLocalElapsedSeconds(0); // Reset local timer
+      setCurrentDistance(0); // Reset distance
       setIsRideActive(true);
       setIsAnimating(true);
     },
@@ -45,10 +70,7 @@ export default function Hud() {
     onSuccess: () => {
       setIsRideActive(false);
       setIsAnimating(false);
-      if (rideIntervalRef.current) {
-        clearInterval(rideIntervalRef.current);
-        rideIntervalRef.current = null;
-      }
+      setCurrentDistance(0); // Reset distance when ride ends
     },
   });
 
@@ -66,8 +88,14 @@ export default function Hud() {
   // Update store when data changes
   useEffect(() => {
     if (data) {
-      setDistance(data.distanceKm);
-      setElapsed(fmtTime(data.elapsedSeconds));
+      if (isRideActive) {
+        // Only update distance if we get a new non-zero value
+        if (data.distanceKm > currentDistance) {
+          setCurrentDistance(data.distanceKm);
+          setDistance(data.distanceKm); // Only update store distance when we have a new value
+        }
+      }
+      setElapsed(fmtTime(localElapsedSeconds));
       setTokens(data.tokens);
     }
     if (isRideActive && data && data.distanceKm === 0 && data.elapsedSeconds === 0 && tokens !== 0) {
@@ -77,36 +105,18 @@ export default function Hud() {
         // setIsRideActive(false);
         // setIsAnimating(false);
     }
-  }, [data, setDistance, setElapsed, setTokens, isRideActive, tokens, setIsAnimating]);
+  }, [data, setDistance, setElapsed, setTokens, isRideActive, tokens, setIsAnimating, localElapsedSeconds, currentDistance]);
 
+  // New effect to handle distance-based addDistance calls
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' && isRideActive && !rideIntervalRef.current) {
-        addDistanceMutation.mutate(); // Call once immediately
-        rideIntervalRef.current = setInterval(() => {
-          addDistanceMutation.mutate();
-        }, 750); // Adjust interval for speed, e.g., every 750ms for 100ft
+    if (isRideActive && currentDistance > 0) {
+      const currentMilestone = Math.floor(currentDistance / 100) * 100;
+      if (currentMilestone > lastDistanceMilestoneRef.current) {
+        lastDistanceMilestoneRef.current = currentMilestone;
+        addDistanceMutation.mutate();
       }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'ArrowRight' && rideIntervalRef.current) {
-        clearInterval(rideIntervalRef.current);
-        rideIntervalRef.current = null;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      if (rideIntervalRef.current) {
-        clearInterval(rideIntervalRef.current);
-      }
-    };
-  }, [isRideActive, addDistanceMutation]);
+    }
+  }, [currentDistance, isRideActive, addDistanceMutation]);
 
   let rideStatusMessage = "Enter your email and unlock the scooter to start your ride.";
   if (start.isPending) {
@@ -114,7 +124,7 @@ export default function Hud() {
   } else if (end.isPending) {
     rideStatusMessage = "Ending ride...";
   } else if (isRideActive) {
-    rideStatusMessage = "Ride in progress. Hold RIGHT ARROW (→) to move.";
+    rideStatusMessage = "Ride in progress.";
   } else if (tokens > 0) { // Assumes tokens > 0 means a ride has occurred
     rideStatusMessage = "Ride ended. Unlock scooter to start a new ride.";
   }
