@@ -99,16 +99,16 @@ export default function Hud() {
         }
       }
       setElapsed(fmtTime(localElapsedSeconds));
-      setTokens(data.tokens);
+      setTokens(data.tokens); // Update tokens whenever we get new data
     }
-    if (isRideActive && data && data.distanceKm === 0 && data.elapsedSeconds === 0 && tokens !== 0) {
+    if (isRideActive && data?.distanceKm === 0 && tokens !== 0) {
         // This condition might need refinement based on actual backend behavior for ended rides
         // Consider if backend signals ride truly ended or if it's just a reset to 0 for a new potential ride
         // If it means the workflow truly ended and we should lock things down:
         // setIsRideActive(false);
         // setIsAnimating(false);
     }
-  }, [data, setDistance, setElapsed, setTokens, isRideActive, tokens, setIsAnimating, localElapsedSeconds, currentDistance]);
+  }, [data, setDistance, setElapsed, isRideActive, tokens, setIsAnimating, localElapsedSeconds, currentDistance, setTokens]);
 
   // New effect to handle distance-based addDistance calls
   useEffect(() => {
