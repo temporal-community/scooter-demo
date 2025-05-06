@@ -1,7 +1,6 @@
 {
     "name": "scooter-demo-api",
     "version": "1.0.0",
-    "type": "module",
     "description": "API to interface with Temporal for scooter ride workflows",
     "main": "lib/index.js",
     "scripts": {
