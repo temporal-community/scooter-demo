@@ -20,6 +20,7 @@ export default function Hud() {
   const {
     distance, elapsed, tokens,
     reset, setDistance, setElapsed, setTokens, setIsAnimating,
+    workflowId, setWorkflowId
   } = useRideStore();
 
   const [email, setEmail] = useState('');
@@ -33,18 +34,15 @@ export default function Hud() {
   // Timer effect
   useEffect(() => {
     if (isRideActive) {
-      // Start the timer
       timerRef.current = setInterval(() => {
         setLocalElapsedSeconds(prev => prev + 1);
       }, 1000);
     } else {
-      // Clear the timer when ride is not active
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
     }
 
-    // Cleanup on unmount
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -55,36 +53,55 @@ export default function Hud() {
   const start = useMutation({
     mutationFn: async () => {
       console.log('Starting ride for email:', email);
-      return startRide();
+      // For demo purposes, we'll use the email as the scooterId
+      return startRide(email);
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       reset();
-      setLocalElapsedSeconds(0); // Reset local timer
-      setCurrentDistance(0); // Reset distance
+      setLocalElapsedSeconds(0);
+      setCurrentDistance(0);
       setIsRideActive(true);
       setIsAnimating(true);
-      setShowSummary(false); // Hide summary when starting a new ride
+      setShowSummary(false);
+      setWorkflowId(data.workflowId);
     },
   });
 
   const end = useMutation({
-    mutationFn: endRide,
+    mutationFn: () => {
+      if (!workflowId) throw new Error('No active workflow');
+      return endRide(workflowId);
+    },
     onSuccess: () => {
       setIsRideActive(false);
       setIsAnimating(false);
-      setCurrentDistance(0); // Reset distance when ride ends
-      setShowSummary(true); // Show summary when ride ends
+      setCurrentDistance(0);
+      setShowSummary(true);
     },
   });
 
+  // Add cleanup effect for workflow ID
+  useEffect(() => {
+    // Only clear workflow ID when summary is dismissed
+    if (!showSummary && !isRideActive) {
+      setWorkflowId(null);
+    }
+  }, [showSummary, isRideActive, setWorkflowId]);
+
   const addDistanceMutation = useMutation({
-    mutationFn: addDistanceApi,
-    // onSuccess/onError can be added if needed for feedback
+    mutationFn: () => {
+      if (!workflowId) throw new Error('No active workflow');
+      return addDistanceApi(workflowId);
+    },
   });
 
   const { data, isLoading: isLoadingRideState } = useQuery<RideStateResponse>({
-    queryKey: ['rideState'],
-    queryFn: getRideState,
+    queryKey: ['rideState', workflowId],
+    queryFn: () => {
+      if (!workflowId) throw new Error('No active workflow');
+      return getRideState(workflowId);
+    },
+    enabled: !!workflowId,
     refetchInterval: 1_000,
   });
 
@@ -92,21 +109,13 @@ export default function Hud() {
   useEffect(() => {
     if (data) {
       if (isRideActive) {
-        // Only update distance if we get a new non-zero value
         if (data.distanceKm > currentDistance) {
           setCurrentDistance(data.distanceKm);
-          setDistance(data.distanceKm); // Only update store distance when we have a new value
+          setDistance(data.distanceKm);
         }
-        setTokens(data.tokens); // Only update tokens when ride is active
+        setTokens(data.tokens);
       }
       setElapsed(fmtTime(localElapsedSeconds));
-    }
-    if (isRideActive && data?.distanceKm === 0 && tokens !== 0) {
-        // This condition might need refinement based on actual backend behavior for ended rides
-        // Consider if backend signals ride truly ended or if it's just a reset to 0 for a new potential ride
-        // If it means the workflow truly ended and we should lock things down:
-        // setIsRideActive(false);
-        // setIsAnimating(false);
     }
   }, [data, setDistance, setElapsed, isRideActive, tokens, setIsAnimating, localElapsedSeconds, currentDistance, setTokens]);
 
@@ -128,14 +137,21 @@ export default function Hud() {
     rideStatusMessage = "Ending ride...";
   } else if (isRideActive) {
     rideStatusMessage = "Ride in progress.";
-  } else if (tokens > 0) { // Assumes tokens > 0 means a ride has occurred
+  } else if (tokens > 0) {
     rideStatusMessage = "Ride ended. Unlock scooter to start a new ride.";
   }
 
   /* --- UI -------------------------------------------------- */
 
   return (
-    <div className="space-y-4 p-4">      
+    <div className="space-y-4 p-4">
+
+      {workflowId && (
+        <p className="text-center text-xs text-gray-500 font-mono">
+          Workflow: {workflowId}
+        </p>
+      )}
+
       {/* Show summary after ride ends */}
       {showSummary && !isRideActive && (
         <div className="border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center animate-fade-in">
@@ -151,7 +167,9 @@ export default function Hud() {
         </div>
       )}
 
-      <p className="text-center text-sm text-gray-600">{rideStatusMessage}</p>
+      <div className="space-y-2">
+        <p className="text-center text-sm text-gray-600">{rideStatusMessage}</p>
+      </div>
 
       {/* Show input and unlock button when not active and not pending */}
       {!isRideActive && !start.isPending && (
