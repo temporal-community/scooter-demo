@@ -21,6 +21,15 @@ import { Client, WorkflowNotFoundError, WorkflowExecutionAlreadyStartedError } f
 const router = Router();
 const envConfig = getEnvConfig(); // Get env config once
 
+// Request logging middleware
+router.use((req: Request, res: Response, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  if (Object.keys(req.body).length > 0) {
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
 // Middleware to handle async route handlers and errors
 const asyncHandler = (fn: (req: Request, res: Response, client: Client) => Promise<Response | void>) =>
   async (req: Request, res: Response) => {

@@ -7,8 +7,8 @@
 export const WORKFLOW_SCOOTER_RIDE = 'ScooterRideWorkflow';
 
 // Signal Names
-export const SIGNAL_END_RIDE = 'endRideSignal';
-export const SIGNAL_ADD_DISTANCE = 'addDistanceSignal';
+export const SIGNAL_END_RIDE = 'endRide';
+export const SIGNAL_ADD_DISTANCE = 'addDistance';
 
 // Query Names
 export const QUERY_TOKENS_CONSUMED = 'tokensConsumed';

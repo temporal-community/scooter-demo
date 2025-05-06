@@ -11,8 +11,16 @@ const env = getEnvConfig();
 app.use(cors()); // Enable CORS for all routes - adjust for production
 app.use(express.json()); // Parse JSON request bodies
 
+// Add detailed request logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Incoming ${req.method} request to ${req.originalUrl}`);
+  console.log('Request headers:', req.headers);
+  console.log('Request body:', req.body);
+  next();
+});
+
 // API Routes
-app.use('/api', apiRoutes); // Prefix all API routes with /api
+app.use('/', apiRoutes);
 
 // Simple health check endpoint
 app.get('/health', (req, res) => {
