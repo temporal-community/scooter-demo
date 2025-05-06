@@ -2,6 +2,7 @@
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 22px;
   line-height: 1.5;
   font-weight: 400;
 
@@ -30,6 +31,7 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-size: 1rem;
 }
 
 h1 {

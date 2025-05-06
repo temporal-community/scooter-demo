@@ -135,9 +135,7 @@ export default function Hud() {
   /* --- UI -------------------------------------------------- */
 
   return (
-    <div className="space-y-4 p-4">
-      <p className="text-center text-sm text-gray-600">{rideStatusMessage}</p>
-      
+    <div className="space-y-4 p-4">      
       {/* Show summary after ride ends */}
       {showSummary && !isRideActive && (
         <div className="border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center animate-fade-in">
@@ -148,13 +146,15 @@ export default function Hud() {
           <div className="w-full space-y-1">
             <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
             <Stat label="Time" value={elapsed} />
-            <Stat label="Cost (tokens)" value={tokens.toFixed(1)} />
+            <Stat label="Cost (tokens)" value={tokens.toString()} />
           </div>
         </div>
       )}
 
-      {/* Hide input and unlock button during summary */}
-      {!isRideActive && !start.isPending && !showSummary && (
+      <p className="text-center text-sm text-gray-600">{rideStatusMessage}</p>
+
+      {/* Show input and unlock button when not active and not pending */}
+      {!isRideActive && !start.isPending && (
         <input
           type="email"
           placeholder="maria@example.com"
@@ -165,7 +165,7 @@ export default function Hud() {
         />
       )}
 
-      {!showSummary && (
+      {!isRideActive && !start.isPending && (
         <button
           className="btn btn-primary w-full"
           onClick={() => {
@@ -196,7 +196,7 @@ export default function Hud() {
         <div className="mt-6 space-y-1">
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
           <Stat label="Time" value={elapsed} />
-          <Stat label="Cost (tokens)" value={tokens.toFixed(1)} />
+          <Stat label="Cost (tokens)" value={tokens.toString()} />
         </div>
       )}
     </div>
