@@ -28,6 +28,7 @@ export default function Hud() {
   const [currentDistance, setCurrentDistance] = useState(0);
   const lastDistanceMilestoneRef = useRef<number>(0);
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [showSummary, setShowSummary] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function Hud() {
       setCurrentDistance(0); // Reset distance
       setIsRideActive(true);
       setIsAnimating(true);
+      setShowSummary(false); // Hide summary when starting a new ride
     },
   });
 
@@ -71,6 +73,7 @@ export default function Hud() {
       setIsRideActive(false);
       setIsAnimating(false);
       setCurrentDistance(0); // Reset distance when ride ends
+      setShowSummary(true); // Show summary when ride ends
     },
   });
 
@@ -135,7 +138,23 @@ export default function Hud() {
     <div className="space-y-4 p-4">
       <p className="text-center text-sm text-gray-600">{rideStatusMessage}</p>
       
-      {!isRideActive && !start.isPending && (
+      {/* Show summary after ride ends */}
+      {showSummary && !isRideActive && (
+        <div className="border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center animate-fade-in">
+          <div className="flex items-center mb-2">
+            <svg className="w-6 h-6 text-green-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            <span className="font-bold text-lg">Ride Summary</span>
+          </div>
+          <div className="w-full space-y-1">
+            <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
+            <Stat label="Time" value={elapsed} />
+            <Stat label="Cost (tokens)" value={tokens.toFixed(1)} />
+          </div>
+        </div>
+      )}
+
+      {/* Hide input and unlock button during summary */}
+      {!isRideActive && !start.isPending && !showSummary && (
         <input
           type="email"
           placeholder="maria@example.com"
@@ -146,19 +165,21 @@ export default function Hud() {
         />
       )}
 
-      <button
-        className="btn btn-primary w-full"
-        onClick={() => {
-          if (email.trim() === '') {
-            alert('Please enter an email address.'); // Basic validation
-            return;
-          }
-          start.mutate();
-        }}
-        disabled={isRideActive || start.isPending || (tokens > 0 && !end.isSuccess && !isRideActive)} // Disable if ride active, pending, or ended but not explicitly reset for a new one
-      >
-        {isRideActive ? 'Scooter Unlocked' : 'Unlock Scooter'}
-      </button>
+      {!showSummary && (
+        <button
+          className="btn btn-primary w-full"
+          onClick={() => {
+            if (email.trim() === '') {
+              alert('Please enter an email address.'); // Basic validation
+              return;
+            }
+            start.mutate();
+          }}
+          disabled={isRideActive || start.isPending || (tokens > 0 && !end.isSuccess && !isRideActive)}
+        >
+          {isRideActive ? 'Scooter Unlocked' : 'Unlock Scooter'}
+        </button>
+      )}
 
       {isRideActive && (
         <button
@@ -170,11 +191,14 @@ export default function Hud() {
         </button>
       )}
 
-      <div className="mt-6 space-y-1">
-        <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
-        <Stat label="Time" value={elapsed} />
-        <Stat label="Cost (tokens)" value={tokens.toFixed(1)} />
-      </div>
+      {/* Only show stats outside summary if ride is active */}
+      {!showSummary && (
+        <div className="mt-6 space-y-1">
+          <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
+          <Stat label="Time" value={elapsed} />
+          <Stat label="Cost (tokens)" value={tokens.toFixed(1)} />
+        </div>
+      )}
     </div>
   );
 }
