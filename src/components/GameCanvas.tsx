@@ -151,7 +151,7 @@ export default function GameCanvas() {
       scene: RideScene,
       scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
+        autoCenter: Phaser.Scale.NO_CENTER
       }
     };
 

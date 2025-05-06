@@ -7,15 +7,15 @@ export default function App() {
       <header className="text-center py-2 font-semibold">🛴 Scooter Demo</header>
 
       <main className="flex-1 flex overflow-hidden">
-        {/* Game layer */}
-        <div className="flex-1 bg-sky-200">
-          <GameCanvas />
-        </div>
-
         {/* HUD pane */}
-        <aside className="w-72 bg-white border-l p-4">
+        <aside className="w-96 bg-white border-r p-4">
           <Hud />
         </aside>
+
+        {/* Game layer */}
+        <div className="flex-1 h-full bg-sky-200">
+          <GameCanvas />
+        </div>
       </main>
     </div>
   );
