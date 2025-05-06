@@ -1,5 +1,8 @@
 # Temporal Scooter Rideshare Demo Frontend
 
+**NOTE: This demo requires the API and backend to be running.**
+
+Found here:
 * API: https://github.com/steveandroulakis/scooter-demo-api
 * Backend: https://github.com/tomwheeler/ss-demo-wip/tree/tom-updates-to-stripe-sessions (TODO update repo)
 
