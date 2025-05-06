@@ -13,6 +13,7 @@ class RideScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private distanceFeet = 0;
   private readonly setDistance = useRideStore.getState().setDistance;
+  private isAnimating = useRideStore.getState().isAnimating;
 
   // Configurable rider scale and vertical position
   private readonly riderScale = 0.83; // Adjusted for 144px sprites (was 2.5 for 48px sprites)
@@ -20,6 +21,22 @@ class RideScene extends Phaser.Scene {
 
   constructor() {
     super({ key: 'RideScene' });
+    
+    // Subscribe to store changes
+    useRideStore.subscribe((state) => {
+      const newIsAnimating = state.isAnimating;
+      if (this.isAnimating !== newIsAnimating) {
+        this.isAnimating = newIsAnimating;
+        // Update animation state if rider exists
+        if (this.rider) {
+          if (newIsAnimating && this.cursors.right?.isDown) {
+            this.rider.play('ride');
+          } else {
+            this.rider.stop();
+          }
+        }
+      }
+    });
   }
 
   preload() {
@@ -65,8 +82,12 @@ class RideScene extends Phaser.Scene {
     try {
       this.rider = this.add
         .sprite(80, this.scale.height * this.riderYPercent, 'rider')
-        .setScale(this.riderScale)
-        .play('ride');
+        .setScale(this.riderScale);
+      
+      // Only start animation if isAnimating is true
+      if (this.isAnimating) {
+        this.rider.play('ride');
+      }
     } catch (error) {
       console.error('Error creating rider sprite:', error);
       return;
@@ -79,7 +100,18 @@ class RideScene extends Phaser.Scene {
   }
 
   update(_: number, delta: number) {
-    if (!this.cursors.right?.isDown) return;
+    // Only allow movement and animation if isAnimating is true
+    if (!this.isAnimating || !this.cursors.right?.isDown) {
+      if (this.rider.anims.isPlaying) {
+        this.rider.stop();
+      }
+      return;
+    }
+
+    // Start animation if it's not already playing
+    if (!this.rider.anims.isPlaying) {
+      this.rider.play('ride');
+    }
 
     // Move 180 px per second → tweak as you like
     const dx = (delta / 1000) * 180;

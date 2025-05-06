@@ -13,3 +13,11 @@ export async function startRide() {
     return { distanceKm: 0, elapsedSeconds: 0, tokens: 0 };
   }
   
+  export async function addDistance() {
+    // placeholder for POST /ride/add-distance or signaling workflow
+    console.log('addDistance called');
+    // In a real scenario, this would trigger the addDistanceSignal
+    // The backend would then update the ride state, which getRideState would pick up.
+    return { success: true };
+  }
+  
