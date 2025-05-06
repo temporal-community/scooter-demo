@@ -233,7 +233,7 @@ export default function Hud() {
   } else if (end.isPending) {
     rideStatusMessage = "Ending ride...";
   } else if (isRideActive) {
-    rideStatusMessage = "Ride in progress. Use controls to move."; // Added hint for movement
+    rideStatusMessage = "Ride in progress. Use the right arrow key on your keyboard to move."; // Added hint for movement
   } else if (showSummary) { // Check showSummary for post-ride message
     rideStatusMessage = "Ride ended.";
   } else if (workflowId && tokens > 0 && !isRideActive) { // Condition for a previous ride summary shown, now ready for new.
