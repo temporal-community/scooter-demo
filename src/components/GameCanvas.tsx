@@ -18,6 +18,8 @@ class RideScene extends Phaser.Scene {
   // Configurable rider scale and vertical position
   private readonly riderScale = 0.83; // Adjusted for 144px sprites (was 2.5 for 48px sprites)
   private readonly riderYPercent = 0.65; // Change this value to move the rider up/down (0 = top, 1 = bottom)
+  private readonly bgYOffset = -240; // Change this value to move the background up/down
+  private readonly bgScale = 1; // Change this value to scale the background
 
   constructor() {
     super({ key: 'RideScene' });
@@ -55,9 +57,11 @@ class RideScene extends Phaser.Scene {
 
   create() {
     // Full-canvas scrolling background
+    const bgHeight = this.scale.height - this.bgYOffset;
     this.bg = this.add
-      .tileSprite(0, 0, this.scale.width, this.scale.height, 'bg')
-      .setOrigin(0);
+      .tileSprite(0, this.bgYOffset, this.scale.width, bgHeight, 'bg')
+      .setOrigin(0, 0)
+      .setScale(this.bgScale);
 
     // Check if the rider texture exists
     if (!this.textures.exists('rider')) {
@@ -81,7 +85,7 @@ class RideScene extends Phaser.Scene {
     // Create rider sprite with error handling
     try {
       this.rider = this.add
-        .sprite(80, this.scale.height * this.riderYPercent, 'rider')
+        .sprite(180, this.scale.height * this.riderYPercent, 'rider')
         .setScale(this.riderScale);
       
       // Only start animation if isAnimating is true
@@ -146,8 +150,8 @@ export default function GameCanvas() {
       },
       scene: RideScene,
       scale: {
-        mode: Phaser.Scale.RESIZE,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
       }
     };
 
