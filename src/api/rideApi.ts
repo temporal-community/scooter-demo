@@ -10,10 +10,10 @@ interface StartRideResponse {
   workflowId: string;
 }
 
-export async function startRide(scooterId: string): Promise<StartRideResponse> {
+export async function startRide(scooterId: string, emailAddress: string): Promise<StartRideResponse> {
   // placeholder for POST /ride/start
   const workflowId = `scooter-session-${scooterId}`;
-  console.log('startRide called for workflow:', workflowId);
+  console.log('startRide called for workflow:', workflowId, 'email:', emailAddress);
   return { 
     rideId: 'demo', 
     startedAt: Date.now(),

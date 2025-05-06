@@ -93,7 +93,7 @@ export default function Hud() {
         throw new Error('Invalid scooter ID');
       }
       console.log('Starting ride for email:', email, 'scooter:', scooterId);
-      return startRide(scooterId);
+      return startRide(scooterId, email);
     },
     onSuccess: (dataResponse) => { // Renamed 'data' to 'dataResponse'
       reset(); // CRITICAL: Resets distance, tokens, elapsed in store to 0/"00:00"
