@@ -352,9 +352,9 @@ export default function Hud() {
 // Stat component for displaying key-value pairs
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between items-center py-2 px-1 border-b border-gray-100 last:border-b-0"> {/* Added padding and border */}
-      <span className="text-gray-600 text-sm">{label}</span>
-      <span className="font-mono text-gray-800 font-semibold text-sm">{value}</span>
+    <div className="flex justify-between items-center py-2 px-1 border-b border-gray-100 last:border-b-0">
+      <span className="text-gray-700 font-sans text-base font-medium tracking-tight">{label}</span>
+      <span className="text-gray-900 font-mono text-lg font-bold tracking-wider">{value}</span>
     </div>
   );
 }
