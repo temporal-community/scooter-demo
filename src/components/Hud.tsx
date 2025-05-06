@@ -11,9 +11,7 @@ const fmtTime = (sec: number): string => {
 };
 
 interface RideStateResponse {
-  distanceFt: number;
-  elapsedSeconds: number; // Assuming API might also return this, though local timer is used for display
-  tokens: number;
+  tokensConsumed: number;
 }
 
 export default function Hud() {
@@ -40,6 +38,8 @@ export default function Hud() {
   const lastBucketRef = useRef(0); // Tracks the last 100-ft bucket for addDistanceApi calls
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [showSummary, setShowSummary] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const errorTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Timer effect for localElapsedSeconds
   useEffect(() => {
@@ -83,6 +83,26 @@ export default function Hud() {
     return true;
   };
 
+  // Function to show error message temporarily
+  const showTemporaryError = (message: string) => {
+    setErrorMessage(message);
+    if (errorTimeoutRef.current) {
+      clearTimeout(errorTimeoutRef.current);
+    }
+    errorTimeoutRef.current = setTimeout(() => {
+      setErrorMessage(null);
+    }, 5000); // Message disappears after 5 seconds
+  };
+
+  // Cleanup error timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Mutation to start a ride
   const start = useMutation({
     mutationFn: async () => {
@@ -95,20 +115,23 @@ export default function Hud() {
       console.log('Starting ride for email:', email, 'scooter:', scooterId);
       return startRide(scooterId, email);
     },
-    onSuccess: (dataResponse) => { // Renamed 'data' to 'dataResponse'
-      reset(); // CRITICAL: Resets distance, tokens, elapsed in store to 0/"00:00"
+    onSuccess: (dataResponse) => {
+      reset();
       setLocalElapsedSeconds(0);
-      setServerReportedDistanceFt(0); // Reset server distance cache
+      setServerReportedDistanceFt(0);
       lastBucketRef.current = 0;
       setIsRideActive(true);
-      // CRITICAL: setIsAnimating(true) should trigger the client-side mechanism
-      // (e.g., in useRideStore or via event listeners) that starts incrementing
-      // the 'distance' in useRideStore based on user actions (e.g., holding arrow key).
       setIsAnimating(true);
       setShowSummary(false);
       setWorkflowId(dataResponse.workflowId);
     },
-    // onError: (error) => { console.error("Failed to start ride:", error); }
+    onError: (error: Error) => {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        showTemporaryError('Unable to connect to the server. Please check if the API is running.');
+      } else {
+        showTemporaryError(error.message || 'Failed to start ride');
+      }
+    }
   });
 
   // Mutation to end a ride
@@ -119,13 +142,16 @@ export default function Hud() {
     },
     onSuccess: () => {
       setIsRideActive(false);
-      // CRITICAL: setIsAnimating(false) should stop the client-side distance accumulation.
       setIsAnimating(false);
-      // localElapsedSeconds will stop via its own effect.
-      // The 'distance' in the store will hold its final value for the summary.
       setShowSummary(true);
     },
-    // onError: (error) => { console.error("Failed to end ride:", error); }
+    onError: (error: Error) => {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        showTemporaryError('Unable to connect to the server. Please check if the API is running.');
+      } else {
+        showTemporaryError(error.message || 'Failed to end ride');
+      }
+    }
   });
 
   // Effect to clean up workflowId when summary is dismissed and ride is not active
@@ -140,42 +166,39 @@ export default function Hud() {
     mutationFn: () => {
       if (!workflowId) throw new Error('No active workflow for addDistance');
       console.log('Calling addDistanceApi via mutation for workflow:', workflowId);
-      return addDistanceApi(workflowId); // API call
+      return addDistanceApi(workflowId);
     },
-    // onSuccess: () => { console.log("addDistanceApi call successful"); },
-    // onError: (error) => { console.error("addDistanceApi call failed:", error); }
+    onError: (error: Error) => {
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        showTemporaryError('Unable to connect to the server. Please check if the API is running.');
+      }
+    }
   });
 
-  // Query to get ride state from the server (e.g., tokens, server's view of distance)
+  // Query to get ride state from the server
   const { data: rideStateData, isLoading: isLoadingRideState } = useQuery<RideStateResponse>({
     queryKey: ['rideState', workflowId],
-    queryFn: () => {
+    queryFn: async () => {
       if (!workflowId) throw new Error('No active workflow for getRideState');
       return getRideState(workflowId);
     },
-    enabled: !!workflowId && isRideActive, // Only fetch if there's a workflowId and ride is active
-    refetchInterval: 2000, // Polling interval (e.g., 2 seconds)
+    enabled: !!workflowId && isRideActive,
+    refetchInterval: 2000,
   });
 
   // Effect to process data from getRideState API poll
   useEffect(() => {
     if (rideStateData) {
       // Update tokens from server data
-      setTokens(rideStateData.tokens);
+      setTokens(rideStateData.tokensConsumed);
       // Update our local cache of the server's reported distance
-      setServerReportedDistanceFt(rideStateData.distanceFt);
+      // Note: We're not using distanceFt anymore since the API doesn't return it
+      // setServerReportedDistanceFt(rideStateData.distanceFt);
 
-      // IMPORTANT: We are NOT calling setDistance(rideStateData.distanceFt) here.
-      // The 'distance' in useRideStore is primarily driven by client-side simulation
-      // (controlled by 'isAnimating' and user input).
-      // rideStateData.distanceFt can be used for reconciliation if needed, but not for direct override here.
+      // Update elapsed time in store using the local component timer
+      setElapsed(fmtTime(localElapsedSeconds));
     }
-    // Update elapsed time in store using the local component timer
-    // This ensures the timer display is smooth and driven by the client.
-    setElapsed(fmtTime(localElapsedSeconds));
-
-  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds, setServerReportedDistanceFt]);
-
+  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds]);
 
   // Effect to call addDistanceApi when 100-ft boundaries are crossed
   // This now relies on 'distance' from useRideStore, which is updated by client simulation.
@@ -226,6 +249,18 @@ export default function Hud() {
         <p className="text-center text-xs text-gray-500 font-mono break-all"> {/* Added break-all for long IDs */}
           Workflow: {workflowId}
         </p>
+      )}
+
+      {/* Error Message Display */}
+      {errorMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded shadow-lg z-50 animate-fade-in">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{errorMessage}</span>
+          </div>
+        </div>
       )}
 
       {/* Ride Summary: Shown when showSummary is true and ride is not active */}

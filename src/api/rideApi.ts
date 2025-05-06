@@ -1,7 +1,5 @@
 interface RideStateResponse {
-  distanceFt: number;
-  elapsedSeconds: number;
-  tokens: number;
+  tokensConsumed: number;
 }
 
 interface StartRideResponse {
@@ -10,37 +8,74 @@ interface StartRideResponse {
   workflowId: string;
 }
 
+interface ActionSuccessResponse {
+  success: boolean;
+  message: string;
+}
+
+const API_BASE_URL = 'http://localhost:3001';
+
 export async function startRide(scooterId: string, emailAddress: string): Promise<StartRideResponse> {
-  // placeholder for POST /ride/start
-  const workflowId = `scooter-session-${scooterId}`;
-  console.log('startRide called for workflow:', workflowId, 'email:', emailAddress);
-  return { 
-    rideId: 'demo', 
-    startedAt: Date.now(),
-    workflowId 
-  };
+  const response = await fetch(`${API_BASE_URL}/ride/start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ scooterId, emailAddress }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to start ride');
+  }
+
+  return response.json();
 }
 
-export async function endRide(workflowId: string) {
-  // placeholder for POST /ride/end
-  console.log('endRide called for workflow:', workflowId);
-  return { tokens: 12.3 };
+export async function endRide(workflowId: string): Promise<ActionSuccessResponse> {
+  const response = await fetch(`${API_BASE_URL}/ride/end`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ workflowId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to end ride');
+  }
+
+  return response.json();
 }
 
-let lastDistanceFt = 0;
 export async function getRideState(workflowId: string): Promise<RideStateResponse> {
-  // Simulate a ride that moves forward by 1 foot per call
-  lastDistanceFt += 1;
-  return {
-    distanceFt: lastDistanceFt,
-    elapsedSeconds: Math.floor(Math.random() * 3600),
-    tokens: Math.floor(Math.random() * 50)
-  };
+  const response = await fetch(`${API_BASE_URL}/ride/state/${workflowId}`, {
+    method: 'GET',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to get ride state');
+  }
+
+  return response.json();
 }
 
-export async function addDistance(workflowId: string) {
-  // placeholder for POST /ride/add-distance or signaling workflow
-  console.log('addDistance called for workflow:', workflowId);
-  return { success: true };
+export async function addDistance(workflowId: string): Promise<ActionSuccessResponse> {
+  const response = await fetch(`${API_BASE_URL}/ride/add-distance`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ workflowId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to add distance');
+  }
+
+  return response.json();
 }
   
