@@ -97,9 +97,9 @@ export default function Hud() {
           setCurrentDistance(data.distanceKm);
           setDistance(data.distanceKm); // Only update store distance when we have a new value
         }
+        setTokens(data.tokens); // Only update tokens when ride is active
       }
       setElapsed(fmtTime(localElapsedSeconds));
-      setTokens(data.tokens); // Update tokens whenever we get new data
     }
     if (isRideActive && data?.distanceKm === 0 && tokens !== 0) {
         // This condition might need refinement based on actual backend behavior for ended rides
