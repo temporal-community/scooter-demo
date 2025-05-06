@@ -252,6 +252,13 @@ export default function Hud() {
               setEmail(e.target.value);
               setEmailError(''); // Clear error when user types
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isRideActive && !start.isPending && !showSummary) {
+                if (validateEmail(email)) {
+                  start.mutate();
+                }
+              }
+            }}
             disabled={isRideActive || start.isPending}
           />
           {emailError && (
