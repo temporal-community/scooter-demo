@@ -1,5 +1,23 @@
-interface RideStateResponse {
-  tokensConsumed: number;
+export interface RideStateResponse {
+  scooterId: string;
+  emailAddress: string;
+  customerId: string;
+  meterName: string;
+  rideTimeoutSecs: number;
+  status: {
+    phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED';
+    startedAt: string;
+    lastMeterAt: string;
+    endedAt?: string;
+    distanceFt: number;
+    tokens: {
+      unlock: number;
+      time: number;
+      distance: number;
+      total: number;
+    };
+    lastError?: string;
+  };
 }
 
 interface StartRideResponse {

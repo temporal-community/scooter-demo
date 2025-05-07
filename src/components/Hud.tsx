@@ -1,6 +1,7 @@
 import { useRideStore } from '../stores/rideStore';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { startRide, endRide, getRideState, addDistance as addDistanceApi } from '../api/rideApi';
+import type { RideStateResponse } from '../api/rideApi';
 import { useEffect, useState, useRef } from 'react';
 
 /** Converts raw seconds → "hh:mm" */
@@ -9,10 +10,6 @@ const fmtTime = (sec: number): string => {
   const s = sec % 60;
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
-
-interface RideStateResponse {
-  tokensConsumed: number;
-}
 
 export default function Hud() {
   const {
@@ -190,10 +187,9 @@ export default function Hud() {
   useEffect(() => {
     if (rideStateData) {
       // Update tokens from server data
-      setTokens(rideStateData.tokensConsumed);
+      setTokens(rideStateData.status.tokens.total);
       // Update our local cache of the server's reported distance
-      // Note: We're not using distanceFt anymore since the API doesn't return it
-      // setServerReportedDistanceFt(rideStateData.distanceFt);
+      setServerReportedDistanceFt(rideStateData.status.distanceFt);
 
       // Update elapsed time in store using the local component timer
       setElapsed(fmtTime(localElapsedSeconds));
