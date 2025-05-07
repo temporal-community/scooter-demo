@@ -39,6 +39,7 @@ export default function Hud() {
   const errorTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [isRequestTimedOut, setIsRequestTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const initializingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Timer effect for localElapsedSeconds
   useEffect(() => {
@@ -189,6 +190,39 @@ export default function Hud() {
     refetchInterval: 2000,
   });
 
+  // Effect to handle INITIALIZING timeout
+  useEffect(() => {
+    if (rideStateData?.status?.phase === 'INITIALIZING' && isRideActive) {
+      // Clear any existing timeout
+      if (initializingTimeoutRef.current) {
+        clearTimeout(initializingTimeoutRef.current);
+      }
+      // Set new timeout
+      initializingTimeoutRef.current = setTimeout(() => {
+        // Only set the message if we're not already showing a request timeout
+        if (!isRequestTimedOut) {
+          setErrorMessage('Your ride is taking longer than usual to start. Don\'t worry, your ride is active and we\'re working on getting your stats ready. Please try again in a moment.');
+        }
+      }, 7000);
+    } else {
+      // Clear timeout if not initializing
+      if (initializingTimeoutRef.current) {
+        clearTimeout(initializingTimeoutRef.current);
+      }
+      // Only clear the initializing message if we're not in INITIALIZING state anymore
+      // and we're not showing a request timeout
+      if (rideStateData?.status?.phase !== 'INITIALIZING' && !isRequestTimedOut) {
+        setErrorMessage(null);
+      }
+    }
+
+    return () => {
+      if (initializingTimeoutRef.current) {
+        clearTimeout(initializingTimeoutRef.current);
+      }
+    };
+  }, [rideStateData?.status?.phase, isRideActive, isRequestTimedOut]);
+
   // Effect to handle request timeout
   useEffect(() => {
     if (isLoadingRideState && isRideActive) {
@@ -209,7 +243,10 @@ export default function Hud() {
       // Only clear the timeout message if we're not loading anymore
       if (!isLoadingRideState) {
         setIsRequestTimedOut(false);
-        setErrorMessage(null);
+        // Only clear the error message if we're not in INITIALIZING state
+        if (rideStateData?.status?.phase !== 'INITIALIZING') {
+          setErrorMessage(null);
+        }
       }
     }
 
@@ -218,21 +255,26 @@ export default function Hud() {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [isLoadingRideState, isRideActive]);
+  }, [isLoadingRideState, isRideActive, rideStateData?.status?.phase]);
 
   // Effect to handle ride state errors
   useEffect(() => {
     if (rideStateError) {
       const error = rideStateError as Error;
       if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
-        showTemporaryError('We\'re having trouble connecting to our servers. Your ride is still active, but we can\'t show your current stats. Please try again in a moment.');
+        setErrorMessage('We\'re having trouble connecting to our servers. Your ride is still active, but we can\'t show your current stats. Please try again in a moment.');
       } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        showTemporaryError('Unable to connect to our servers. Your ride is still active, but we can\'t show your current stats. Please check your internet connection.');
+        setErrorMessage('Unable to connect to our servers. Your ride is still active, but we can\'t show your current stats. Please check your internet connection.');
       } else {
-        showTemporaryError(error.message || 'Unable to get ride status. Please try again.');
+        setErrorMessage(error.message || 'Unable to get ride status. Please try again.');
+      }
+    } else {
+      // Clear error message if there's no error and we're not in a timeout state
+      if (!isRequestTimedOut && rideStateData?.status?.phase !== 'INITIALIZING') {
+        setErrorMessage(null);
       }
     }
-  }, [rideStateError]);
+  }, [rideStateError, isRequestTimedOut, rideStateData?.status?.phase]);
 
   // Effect to process data from getRideState API poll
   useEffect(() => {
