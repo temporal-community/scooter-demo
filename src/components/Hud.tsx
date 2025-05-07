@@ -37,6 +37,8 @@ export default function Hud() {
   const [showSummary, setShowSummary] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const errorTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const [isRequestTimedOut, setIsRequestTimedOut] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Timer effect for localElapsedSeconds
   useEffect(() => {
@@ -173,15 +175,64 @@ export default function Hud() {
   });
 
   // Query to get ride state from the server
-  const { data: rideStateData, isLoading: isLoadingRideState } = useQuery<RideStateResponse>({
+  const { data: rideStateData, isLoading: isLoadingRideState, error: rideStateError } = useQuery<RideStateResponse>({
     queryKey: ['rideState', workflowId],
     queryFn: async () => {
       if (!workflowId) throw new Error('No active workflow for getRideState');
-      return getRideState(workflowId);
+      const response = await getRideState(workflowId);
+      if (!response) {
+        throw new Error('Unable to get ride status. Please try again.');
+      }
+      return response;
     },
     enabled: !!workflowId && isRideActive,
     refetchInterval: 2000,
   });
+
+  // Effect to handle request timeout
+  useEffect(() => {
+    if (isLoadingRideState && isRideActive) {
+      // Clear any existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      // Set new timeout
+      timeoutRef.current = setTimeout(() => {
+        setIsRequestTimedOut(true);
+        setErrorMessage('Taking longer than usual to get your ride status. Your ride is still active, but we can\'t show your current stats. Please try again in a moment.');
+      }, 5000);
+    } else {
+      // Clear timeout if not loading
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      // Only clear the timeout message if we're not loading anymore
+      if (!isLoadingRideState) {
+        setIsRequestTimedOut(false);
+        setErrorMessage(null);
+      }
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isLoadingRideState, isRideActive]);
+
+  // Effect to handle ride state errors
+  useEffect(() => {
+    if (rideStateError) {
+      const error = rideStateError as Error;
+      if (error.message.includes('500') || error.message.includes('Internal Server Error')) {
+        showTemporaryError('We\'re having trouble connecting to our servers. Your ride is still active, but we can\'t show your current stats. Please try again in a moment.');
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        showTemporaryError('Unable to connect to our servers. Your ride is still active, but we can\'t show your current stats. Please check your internet connection.');
+      } else {
+        showTemporaryError(error.message || 'Unable to get ride status. Please try again.');
+      }
+    }
+  }, [rideStateError]);
 
   // Effect to process data from getRideState API poll
   useEffect(() => {
