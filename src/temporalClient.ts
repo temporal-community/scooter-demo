@@ -156,11 +156,11 @@ export async function queryWorkflow<TResult>(
   queryName: string,
   queryArgs: unknown[] = []
 ): Promise<TResult> {
-  console.log(`Querying workflow ${workflowId} with query ${queryName}`);
+  // console.log(`Querying workflow ${workflowId} with query ${queryName}`);
   try {
     const handle = client.workflow.getHandle(workflowId);
     const result = await handle.query<TResult>(queryName);
-    console.log(`Query ${queryName} for workflow ${workflowId} successful.`);
+    // console.log(`Query ${queryName} for workflow ${workflowId} successful.`);
     return result;
   } catch (error) {
     if (error instanceof WorkflowNotFoundError) {
