@@ -57,7 +57,7 @@ const asyncHandler = (fn: (req: Request, res: Response, client: Client) => Promi
  * Starts a new scooter ride.
  */
 router.post('/ride/start', asyncHandler(async (req: Request, res: Response, client: Client) => {
-  const { scooterId, emailAddress } = req.body as StartRideRequest;
+  const { scooterId, emailAddress, pricePerThousand, currency } = req.body as StartRideRequest;
 
   if (!scooterId || !emailAddress) {
     return res.status(400).json({ message: 'scooterId and emailAddress are required.' });
@@ -73,6 +73,8 @@ router.post('/ride/start', asyncHandler(async (req: Request, res: Response, clie
     customerId: `cust-${emailAddress.split('@')[0]}`, // Placeholder customerId logic
     meterName: 'scooter-ride-tq', // Example from your client.ts
     rideTimeoutSecs: 60 * 60 * 3,  // 3 hours, example from your client.ts
+    pricePerThousand,
+    currency,
   };
 
   await startScooterWorkflow(client, envConfig.temporalTaskQueue, workflowArgs, workflowId);
