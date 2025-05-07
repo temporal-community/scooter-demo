@@ -270,6 +270,18 @@ export default function Hud() {
             <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
             <Stat label="Time" value={elapsed} />
             <Stat label="Cost (tokens)" value={tokens.toString()} />
+            {/* --- Token Breakdown Subsection --- */}
+            <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
+              <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
+              <div className="space-y-1">
+                <BreakdownStat label="Unlock fee" value="10" />
+                <BreakdownStat label="Ride time" value="8" />
+                <BreakdownStat label="Distance" value="14" />
+                <div className="border-t border-green-200 my-2"></div>
+                <BreakdownStat label="Total" value="32" bold />
+              </div>
+            </div>
+            {/* --- End Token Breakdown --- */}
           </div>
            <button
             onClick={() => setShowSummary(false)}
@@ -373,6 +385,18 @@ export default function Hud() {
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
           <Stat label="Time" value={elapsed} />
           <Stat label="Cost (tokens)" value={tokens.toString()} />
+          {/* --- Token Breakdown Subsection --- */}
+          <div className="mt-4 bg-gray-50 border border-gray-100 rounded-md p-3">
+            <h4 className="text-sm font-semibold text-gray-600 mb-2 text-center">Token Breakdown</h4>
+            <div className="space-y-1">
+              <BreakdownStat label="Unlock fee" value="10" />
+              <BreakdownStat label="Ride time" value="8" />
+              <BreakdownStat label="Distance" value="14" />
+              <div className="border-t border-gray-200 my-2"></div>
+              <BreakdownStat label="Total" value="32" bold />
+            </div>
+          </div>
+          {/* --- End Token Breakdown --- */}
           {isLoadingRideState && <p className="text-xs text-gray-400 text-center mt-2">Updating stats...</p>}
         </div>
       )}
@@ -386,6 +410,16 @@ function Stat({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between items-center py-2 px-1 border-b border-gray-100 last:border-b-0">
       <span className="text-gray-700 font-sans text-base font-medium tracking-tight">{label}</span>
       <span className="text-gray-900 font-mono text-lg font-bold tracking-wider">{value}</span>
+    </div>
+  );
+}
+
+// Add BreakdownStat component for token breakdown
+function BreakdownStat({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className="flex justify-between items-center">
+      <span className={`text-gray-600 text-sm ${bold ? 'font-bold' : ''}`}>{label}</span>
+      <span className={`text-gray-900 font-mono text-base ${bold ? 'font-bold' : ''}`}>{value}</span>
     </div>
   );
 }
