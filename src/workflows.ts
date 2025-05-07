@@ -11,5 +11,6 @@ export const SIGNAL_END_RIDE = 'endRide';
 export const SIGNAL_ADD_DISTANCE = 'addDistance';
 
 // Query Names
-export const QUERY_TOKENS_CONSUMED = 'tokensConsumed';
+export const QUERY_TOKENS_CONSUMED = 'getTokensConsumed';
+export const QUERY_RIDE_DETAILS = 'getRideDetails';
  

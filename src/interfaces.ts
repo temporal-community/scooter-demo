@@ -66,3 +66,28 @@ export interface RideStateResponse {
   //   distanceToAddFt: number;
   // }
    
+  /**
+   * Detailed ride status information including lifecycle, timestamps, and token breakdown.
+   */
+  export interface RideStatus {
+    /** High-level lifecycle */
+    phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED';
+
+    /** Timestamps (ISO 8601) */
+    startedAt: string;      // set when BeginRide succeeds
+    lastMeterAt: string;    // update each time PostTimeCharge runs
+    endedAt?: string;       // set when EndRide succeeds
+
+    /** Usage counters */
+    distanceFt: number;     // add 100 on every addDistance signal
+    tokens: {
+        unlock:   number;
+        time:     number;
+        distance: number;
+        total:    number;     // unlock + time + distance
+    };
+
+    /** Troubleshooting */
+    lastError?: string;     // most recent ApplicationFailure.message
+  }
+   

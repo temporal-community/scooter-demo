@@ -1,11 +1,13 @@
 import fs from 'fs/promises';
 import { Connection, Client, WorkflowHandle, WorkflowNotFoundError } from '@temporalio/client';
 import { getEnvConfig, EnvConfig } from './env';
+import { RideStatus } from './interfaces';
 import {
   WORKFLOW_SCOOTER_RIDE,
   SIGNAL_ADD_DISTANCE,
   SIGNAL_END_RIDE,
-  QUERY_TOKENS_CONSUMED
+  QUERY_TOKENS_CONSUMED,
+  QUERY_RIDE_DETAILS
 } from './workflows';
 
 // --- Input type ---
@@ -199,4 +201,14 @@ export async function addDistanceToWorkflow(
   workflowId: string
 ): Promise<void> {
   await signalWorkflow(client, workflowId, SIGNAL_ADD_DISTANCE);
+}
+
+/**
+ * Gets the detailed ride status by querying the workflow.
+ * @param client - The Temporal Client instance.
+ * @param workflowId - The ID of the workflow representing the ride.
+ * @returns A Promise resolving to the RideStatus object.
+ */
+export async function getRideDetails(client: Client, workflowId: string): Promise<RideStatus> {
+  return queryWorkflow<RideStatus>(client, workflowId, QUERY_RIDE_DETAILS);
 }
