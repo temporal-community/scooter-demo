@@ -4,7 +4,7 @@
 
 Found here:
 * Frontend: https://github.com/steveandroulakis/scooter-demo-frontend
-* Backend: https://github.com/tomwheeler/ss-demo-wip/tree/tom-updates-to-stripe-sessions (TODO update repo)
+* Backend: https://github.com/tomwheeler/scooter-demo-backend
 
 A Node.js/TypeScript API that interfaces with Temporal for managing scooter ride workflows. This API provides endpoints for starting, ending, and tracking scooter rides.
 
