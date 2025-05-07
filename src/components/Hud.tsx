@@ -121,7 +121,7 @@ export default function Hud() {
       setServerReportedDistanceFt(0);
       lastBucketRef.current = 0;
       setIsRideActive(true);
-      setIsAnimating(true);
+      setIsAnimating(rideStateData?.status?.phase !== 'FAILED');
       setShowSummary(false);
       setWorkflowId(dataResponse.workflowId);
     },
@@ -187,7 +187,7 @@ export default function Hud() {
       return response;
     },
     enabled: !!workflowId && isRideActive,
-    refetchInterval: 2000,
+    refetchInterval: 500,
   });
 
   // Effect to handle INITIALIZING timeout
@@ -203,7 +203,7 @@ export default function Hud() {
         if (!isRequestTimedOut) {
           setErrorMessage('Your ride is taking longer than usual to start. Don\'t worry, your ride is active and we\'re working on getting your stats ready. Please try again in a moment.');
         }
-      }, 5000);
+      }, 3000);
     } else {
       // Clear timeout if not initializing
       if (initializingTimeoutRef.current) {
@@ -234,7 +234,7 @@ export default function Hud() {
       timeoutRef.current = setTimeout(() => {
         setIsRequestTimedOut(true);
         setErrorMessage('Taking longer than usual to get your ride status. Your ride is still active, but we can\'t show your current stats. Please try again in a moment.');
-      }, 5000);
+      }, 3000);
     } else {
       // Clear timeout if not loading
       if (timeoutRef.current) {
@@ -286,8 +286,11 @@ export default function Hud() {
 
       // Update elapsed time in store using the local component timer
       setElapsed(fmtTime(localElapsedSeconds));
+
+      // Update animation state based on ride phase
+      setIsAnimating(rideStateData.status.phase !== 'FAILED');
     }
-  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds]);
+  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds, setIsAnimating]);
 
   // Effect to call addDistanceApi when 100-ft boundaries are crossed
   // This now relies on 'distance' from useRideStore, which is updated by client simulation.
@@ -487,7 +490,7 @@ export default function Hud() {
       )}
 
       {/* Live Stats Display: Show if ride is active (and summary is not shown) */}
-      {isRideActive && ( // Simplified condition: only show if ride is active
+      {isRideActive && rideStateData?.status?.phase !== 'FAILED' && ( // Don't show stats if phase is FAILED
         <div className="mt-6 space-y-1 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
           <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
@@ -519,6 +522,69 @@ export default function Hud() {
           {isLoadingRideState && <p className="text-xs text-gray-400 text-center mt-2">Updating stats...</p>}
         </div>
       )}
+
+      {/* Workflow Error Display */}
+      {(() => {
+        console.log('Debug rideStateData:', {
+          phase: rideStateData?.status?.phase,
+          isRideActive,
+          lastError: rideStateData?.status?.lastError
+        });
+        return rideStateData?.status?.phase === 'FAILED' && (
+          <div className="mt-6 border border-red-300 bg-red-50 rounded-lg p-4 mb-4 text-red-800 flex flex-col items-center shadow-md animate-fade-in">
+            <div className="flex items-center mb-3">
+              <svg className="w-7 h-7 text-red-500 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span className="font-bold text-xl">Unable to Start Ride</span>
+            </div>
+            <div className="w-full space-y-4">
+              <p className="text-center text-red-700">
+                {rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND'
+                  ? 'We couldn\'t find an account with that email address.'
+                  : 'There was a problem starting your ride. Please try again.'}
+              </p>
+              
+              {/* Email Input for Retry */}
+              <div className="space-y-1">
+                <input
+                  type="email"
+                  placeholder="Try another email address"
+                  className="input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-800"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setEmailError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !start.isPending) {
+                      if (validateEmail(email)) {
+                        start.mutate();
+                      }
+                    }
+                  }}
+                />
+                {emailError && (
+                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                )}
+              </div>
+
+              {/* Retry Button */}
+              <button
+                className="w-full bg-red-600 hover:bg-red-700 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+                onClick={() => {
+                  if (validateEmail(email)) {
+                    start.mutate();
+                  }
+                }}
+                disabled={start.isPending}
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
