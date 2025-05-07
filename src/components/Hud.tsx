@@ -267,9 +267,13 @@ export default function Hud() {
             <span className="font-bold text-xl">Ride Summary</span> {/* Increased text size */}
           </div>
           <div className="w-full space-y-2"> {/* Increased spacing */}
+            {(() => {
+              console.log('Summary rideStateData:', rideStateData);
+              return null;
+            })()}
             <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
             <Stat label="Time" value={elapsed} />
-            <Stat label="Cost" value={`${rideStateData?.currency || 'USD'} ${((rideStateData?.status.tokens.total || 0) * (rideStateData?.pricePerThousand || 25) / 1000).toFixed(2)}`} />
+            <Stat label="Cost" value={rideStateData ? `${rideStateData.currency} ${(rideStateData.status.tokens.total * rideStateData.pricePerThousand / 1000).toFixed(2)}` : 'Loading...'} />
             {/* --- Token Breakdown Subsection --- */}
             <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
               <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
@@ -279,6 +283,17 @@ export default function Hud() {
                 <BreakdownStat label="Distance" value={rideStateData?.status.tokens.distance.toString() ?? "0"} />
                 <div className="border-t border-green-200 my-2"></div>
                 <BreakdownStat label="Total" value={rideStateData?.status.tokens.total.toString() ?? "0"} bold />
+                {/* --- Token to Dollar Calculation & Explanation --- */}
+                {rideStateData &&
+                  typeof rideStateData.pricePerThousand === 'number' &&
+                  typeof rideStateData.currency === 'string' && (
+                    <div className="mt-2 text-xs text-gray-500 text-center">
+                      {`${rideStateData.status.tokens.total} tokens × $${(rideStateData.pricePerThousand / 1000).toFixed(3)} = $${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}`}
+                      <br />
+                      {`1,000 tokens = $${rideStateData.pricePerThousand.toFixed(2)} (${rideStateData.currency})`}
+                    </div>
+                )}
+                {/* --- End Token to Dollar Calculation & Explanation --- */}
               </div>
             </div>
             {/* --- End Token Breakdown --- */}
@@ -384,7 +399,7 @@ export default function Hud() {
           <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
           <Stat label="Time" value={elapsed} />
-          <Stat label="Cost" value={`${rideStateData?.currency || 'USD'} ${((rideStateData?.status.tokens.total || 0) * (rideStateData?.pricePerThousand || 25) / 1000).toFixed(2)}`} />
+          <Stat label="Cost" value={rideStateData ? `${rideStateData.currency} ${(rideStateData.status.tokens.total * rideStateData.pricePerThousand / 1000).toFixed(2)}` : 'Loading...'} />
           {/* --- Token Breakdown Subsection --- */}
           <div className="mt-4 bg-gray-50 border border-gray-100 rounded-md p-3">
             <h4 className="text-sm font-semibold text-gray-600 mb-2 text-center">Token Breakdown</h4>
@@ -394,6 +409,17 @@ export default function Hud() {
               <BreakdownStat label="Distance" value={rideStateData?.status.tokens.distance.toString() ?? "0"} />
               <div className="border-t border-gray-200 my-2"></div>
               <BreakdownStat label="Total" value={rideStateData?.status.tokens.total.toString() ?? "0"} bold />
+              {/* --- Token to Dollar Calculation & Explanation --- */}
+              {rideStateData &&
+                typeof rideStateData.pricePerThousand === 'number' &&
+                typeof rideStateData.currency === 'string' && (
+                  <div className="mt-2 text-xs text-gray-500 text-center">
+                    {`${rideStateData.status.tokens.total} tokens × $${(rideStateData.pricePerThousand / 1000).toFixed(3)} = $${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}`}
+                    <br />
+                    {`1,000 tokens = $${rideStateData.pricePerThousand.toFixed(2)} (${rideStateData.currency})`}
+                  </div>
+              )}
+              {/* --- End Token to Dollar Calculation & Explanation --- */}
             </div>
           </div>
           {/* --- End Token Breakdown --- */}

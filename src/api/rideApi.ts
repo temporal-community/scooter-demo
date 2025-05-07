@@ -41,7 +41,12 @@ export async function startRide(scooterId: string, emailAddress: string): Promis
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ scooterId, emailAddress }),
+    body: JSON.stringify({ 
+      scooterId, 
+      emailAddress,
+      pricePerThousand: 25,
+      currency: "USD"
+    }),
   });
 
   if (!response.ok) {
