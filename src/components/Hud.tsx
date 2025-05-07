@@ -269,7 +269,7 @@ export default function Hud() {
           <div className="w-full space-y-2"> {/* Increased spacing */}
             <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
             <Stat label="Time" value={elapsed} />
-            <Stat label="Cost (tokens)" value={tokens.toString()} />
+            <Stat label="Cost" value={`${rideStateData?.currency || 'USD'} ${((rideStateData?.status.tokens.total || 0) * (rideStateData?.pricePerThousand || 25) / 1000).toFixed(2)}`} />
             {/* --- Token Breakdown Subsection --- */}
             <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
               <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
@@ -384,7 +384,7 @@ export default function Hud() {
           <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
           <Stat label="Time" value={elapsed} />
-          <Stat label="Cost (tokens)" value={tokens.toString()} />
+          <Stat label="Cost" value={`${rideStateData?.currency || 'USD'} ${((rideStateData?.status.tokens.total || 0) * (rideStateData?.pricePerThousand || 25) / 1000).toFixed(2)}`} />
           {/* --- Token Breakdown Subsection --- */}
           <div className="mt-4 bg-gray-50 border border-gray-100 rounded-md p-3">
             <h4 className="text-sm font-semibold text-gray-600 mb-2 text-center">Token Breakdown</h4>

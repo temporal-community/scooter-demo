@@ -4,6 +4,8 @@ export interface RideStateResponse {
   customerId: string;
   meterName: string;
   rideTimeoutSecs: number;
+  pricePerThousand: number;
+  currency: string;
   status: {
     phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED';
     startedAt: string;
