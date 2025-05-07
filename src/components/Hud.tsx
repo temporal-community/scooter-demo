@@ -274,11 +274,11 @@ export default function Hud() {
             <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
               <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
               <div className="space-y-1">
-                <BreakdownStat label="Unlock fee" value="10" />
-                <BreakdownStat label="Ride time" value="8" />
-                <BreakdownStat label="Distance" value="14" />
+                <BreakdownStat label="Unlock fee" value={rideStateData?.status.tokens.unlock.toString() ?? "0"} />
+                <BreakdownStat label="Ride time" value={rideStateData?.status.tokens.time.toString() ?? "0"} />
+                <BreakdownStat label="Distance" value={rideStateData?.status.tokens.distance.toString() ?? "0"} />
                 <div className="border-t border-green-200 my-2"></div>
-                <BreakdownStat label="Total" value="32" bold />
+                <BreakdownStat label="Total" value={rideStateData?.status.tokens.total.toString() ?? "0"} bold />
               </div>
             </div>
             {/* --- End Token Breakdown --- */}
@@ -389,11 +389,11 @@ export default function Hud() {
           <div className="mt-4 bg-gray-50 border border-gray-100 rounded-md p-3">
             <h4 className="text-sm font-semibold text-gray-600 mb-2 text-center">Token Breakdown</h4>
             <div className="space-y-1">
-              <BreakdownStat label="Unlock fee" value="10" />
-              <BreakdownStat label="Ride time" value="8" />
-              <BreakdownStat label="Distance" value="14" />
+              <BreakdownStat label="Unlock fee" value={rideStateData?.status.tokens.unlock.toString() ?? "0"} />
+              <BreakdownStat label="Ride time" value={rideStateData?.status.tokens.time.toString() ?? "0"} />
+              <BreakdownStat label="Distance" value={rideStateData?.status.tokens.distance.toString() ?? "0"} />
               <div className="border-t border-gray-200 my-2"></div>
-              <BreakdownStat label="Total" value="32" bold />
+              <BreakdownStat label="Total" value={rideStateData?.status.tokens.total.toString() ?? "0"} bold />
             </div>
           </div>
           {/* --- End Token Breakdown --- */}
