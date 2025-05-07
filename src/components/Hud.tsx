@@ -203,7 +203,7 @@ export default function Hud() {
         if (!isRequestTimedOut) {
           setErrorMessage('Your ride is taking longer than usual to start. Don\'t worry, your ride is active and we\'re working on getting your stats ready. Please try again in a moment.');
         }
-      }, 7000);
+      }, 5000);
     } else {
       // Clear timeout if not initializing
       if (initializingTimeoutRef.current) {
