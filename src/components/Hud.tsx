@@ -537,7 +537,7 @@ export default function Hud() {
               <p className="text-center text-red-700">
                 {rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND'
                   ? 'We couldn\'t find an account with that email address.'
-                  : 'There was a problem starting your ride. Please try again.'}
+                  : 'There was a problem starting your ride: Invalid email address.'}
               </p>
               
               {/* Email Input for Retry */}
