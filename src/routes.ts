@@ -121,8 +121,22 @@ router.get('/ride/state/:workflowId', asyncHandler(async (req: Request, res: Res
     return res.status(400).json({ message: 'workflowId path parameter is required.' });
   }
 
-  const rideStatus = await getRideDetails(client, workflowId);
-  res.status(200).json(rideStatus);
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Request timed out after 2 seconds')), 2000);
+  });
+
+  try {
+    const rideStatus = await Promise.race([
+      getRideDetails(client, workflowId),
+      timeoutPromise
+    ]);
+    res.status(200).json(rideStatus);
+  } catch (error: any) {
+    if (error.message === 'Request timed out after 2 seconds') {
+      return res.status(500).json({ message: 'Request timed out while fetching ride state' });
+    }
+    throw error; // Let the asyncHandler catch other errors
+  }
 }));
 
 /**
