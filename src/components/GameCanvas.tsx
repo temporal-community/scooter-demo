@@ -29,6 +29,11 @@ class RideScene extends Phaser.Scene {
       const newIsAnimating = state.isAnimating;
       if (this.isAnimating !== newIsAnimating) {
         this.isAnimating = newIsAnimating;
+        // Reset distance when starting a new ride
+        if (newIsAnimating) {
+          this.distanceFeet = 0;
+          this.setDistance(0);
+        }
         // Update animation state if rider exists
         if (this.rider) {
           if (newIsAnimating && this.cursors.right?.isDown) {

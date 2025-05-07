@@ -30,8 +30,6 @@ export default function Hud() {
   const [scooterIdError, setScooterIdError] = useState('');
   const [isRideActive, setIsRideActive] = useState(false);
   const [localElapsedSeconds, setLocalElapsedSeconds] = useState(0);
-  // Local state to store the distance reported by the server, for reference or future reconciliation
-  const [serverReportedDistanceFt, setServerReportedDistanceFt] = useState(0);
   const lastBucketRef = useRef(0); // Tracks the last 100-ft bucket for addDistanceApi calls
   const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [showSummary, setShowSummary] = useState(false);
@@ -118,7 +116,6 @@ export default function Hud() {
     onSuccess: (dataResponse) => {
       reset();
       setLocalElapsedSeconds(0);
-      setServerReportedDistanceFt(0);
       lastBucketRef.current = 0;
       setIsRideActive(true);
       setIsAnimating(rideStateData?.status?.phase !== 'FAILED');
@@ -281,8 +278,6 @@ export default function Hud() {
     if (rideStateData) {
       // Update tokens from server data
       setTokens(rideStateData.status.tokens.total);
-      // Update our local cache of the server's reported distance
-      setServerReportedDistanceFt(rideStateData.status.distanceFt);
 
       // Update elapsed time in store using the local component timer
       setElapsed(fmtTime(localElapsedSeconds));
