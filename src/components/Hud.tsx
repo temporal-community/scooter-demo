@@ -511,8 +511,8 @@ export default function Hud() {
         </button>
       )}
 
-      {/* End Ride Button: Show if ride is active */}
-      {isRideActive && (
+      {/* End Ride Button: Show if ride is active AND not failed */}
+      {isRideActive && rideStateData?.status?.phase !== 'FAILED' && (
         <button
           className="w-full bg-rose-600 hover:bg-rose-700 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
           onClick={() => end.mutate()}
