@@ -21,7 +21,8 @@ export default function Hud() {
     setTokens,  // To store tokens from API
     setIsAnimating, // This toggle is crucial for client-side distance accumulation
     workflowId,
-    setWorkflowId
+    setWorkflowId,
+    setMovementDisabledMessage
   } = useRideStore();
 
   const [email, setEmail] = useState('');
@@ -118,7 +119,9 @@ export default function Hud() {
       setLocalElapsedSeconds(0);
       lastBucketRef.current = 0;
       setIsRideActive(true);
-      setIsAnimating(rideStateData?.status?.phase !== 'FAILED');
+      const shouldAnimate = rideStateData?.status?.phase !== 'FAILED';
+      setIsAnimating(shouldAnimate);
+      setMovementDisabledMessage(null);
       setShowSummary(false);
       setWorkflowId(dataResponse.workflowId);
     },
@@ -128,6 +131,8 @@ export default function Hud() {
       } else {
         showTemporaryError(error.message || 'Failed to start ride');
       }
+      setIsAnimating(false);
+      setMovementDisabledMessage('Unable to start ride. Please try again.');
     }
   });
 
@@ -140,6 +145,7 @@ export default function Hud() {
     onSuccess: () => {
       setIsRideActive(false);
       setIsAnimating(false);
+      setMovementDisabledMessage('Ride ended. Press "Unlock Scooter" to start a new ride.');
       setShowSummary(true);
     },
     onError: (error: Error) => {
@@ -148,6 +154,8 @@ export default function Hud() {
       } else {
         showTemporaryError(error.message || 'Failed to end ride');
       }
+      setIsAnimating(false);
+      setMovementDisabledMessage('Unable to end ride. Please try again.');
     }
   });
 
@@ -283,9 +291,23 @@ export default function Hud() {
       setElapsed(fmtTime(localElapsedSeconds));
 
       // Update animation state based on ride phase
-      setIsAnimating(rideStateData.status.phase !== 'FAILED');
+      const shouldAnimate = rideStateData.status.phase !== 'FAILED';
+      setIsAnimating(shouldAnimate);
+      
+      // Set appropriate movement disabled message based on ride state
+      if (!shouldAnimate) {
+        if (rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND') {
+          setMovementDisabledMessage('Account not found. Please try a different email address.');
+        } else if (rideStateData.status.phase === 'FAILED') {
+          setMovementDisabledMessage('Ride failed. Please try again.');
+        } else {
+          setMovementDisabledMessage('Movement disabled. Please try again.');
+        }
+      } else {
+        setMovementDisabledMessage(null);
+      }
     }
-  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds, setIsAnimating]);
+  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds, setIsAnimating, setMovementDisabledMessage]);
 
   // Effect to call addDistanceApi when 100-ft boundaries are crossed
   // This now relies on 'distance' from useRideStore, which is updated by client simulation.
@@ -353,42 +375,56 @@ export default function Hud() {
       {/* Ride Summary: Shown when showSummary is true and ride is not active */}
       {showSummary && !isRideActive && (
         <div className="border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center shadow-md animate-fade-in">
-          <div className="flex items-center mb-3"> {/* Increased margin-bottom */}
-            <svg className="w-7 h-7 text-green-500 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-            <span className="font-bold text-xl">Ride Summary</span> {/* Increased text size */}
-          </div>
-          <div className="w-full space-y-2"> {/* Increased spacing */}
-            {(() => {
-              console.log('Summary rideStateData:', rideStateData);
-              return null;
-            })()}
-            <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
-            <Stat label="Time" value={elapsed} />
-            <Stat label="Cost" value={rideStateData ? `${rideStateData.currency} ${(rideStateData.status.tokens.total * rideStateData.pricePerThousand / 1000).toFixed(2)}` : 'Loading...'} />
-            {/* --- Token Breakdown Subsection --- */}
-            <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
-              <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
-              <div className="space-y-1">
-                <BreakdownStat label="Unlock fee" value={rideStateData?.status.tokens.unlock.toString() ?? "0"} />
-                <BreakdownStat label="Ride time" value={rideStateData?.status.tokens.time.toString() ?? "0"} />
-                <BreakdownStat label="Distance" value={rideStateData?.status.tokens.distance.toString() ?? "0"} />
-                <div className="border-t border-green-200 my-2"></div>
-                <BreakdownStat label="Total" value={rideStateData?.status.tokens.total.toString() ?? "0"} bold />
-                {/* --- Token to Dollar Calculation & Explanation --- */}
-                {rideStateData &&
-                  typeof rideStateData.pricePerThousand === 'number' &&
-                  typeof rideStateData.currency === 'string' && (
+          {!rideStateData ? (
+            <div className="text-center">
+              <p>Loading ride summary...</p>
+            </div>
+          ) : (
+            <div className="w-full space-y-2"> {/* Increased spacing */}
+              <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
+              <Stat label="Time" value={elapsed} />
+              <Stat 
+                label="Cost" 
+                value={rideStateData?.status?.tokens?.total && rideStateData?.pricePerThousand && rideStateData?.currency 
+                  ? `${rideStateData.currency} ${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}`
+                  : 'Loading...'} 
+              />
+              {/* Token Breakdown Subsection */}
+              <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
+                <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
+                <div className="space-y-1">
+                  <BreakdownStat 
+                    label="Unlock fee" 
+                    value={rideStateData?.status?.tokens?.unlock?.toString() ?? "0"} 
+                  />
+                  <BreakdownStat 
+                    label="Ride time" 
+                    value={rideStateData?.status?.tokens?.time?.toString() ?? "0"} 
+                  />
+                  <BreakdownStat 
+                    label="Distance" 
+                    value={rideStateData?.status?.tokens?.distance?.toString() ?? "0"} 
+                  />
+                  <div className="border-t border-green-200 my-2"></div>
+                  <BreakdownStat 
+                    label="Total" 
+                    value={rideStateData?.status?.tokens?.total?.toString() ?? "0"} 
+                    bold 
+                  />
+                  {/* Token to Dollar Calculation & Explanation */}
+                  {rideStateData?.status?.tokens?.total && 
+                   typeof rideStateData.pricePerThousand === 'number' && 
+                   typeof rideStateData.currency === 'string' && (
                     <div className="mt-2 text-xs text-gray-500 text-center">
                       {`${rideStateData.status.tokens.total} tokens × $${(rideStateData.pricePerThousand / 1000).toFixed(3)} = $${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}`}
                       <br />
                       {`1,000 tokens = $${rideStateData.pricePerThousand.toFixed(2)} (${rideStateData.currency})`}
                     </div>
-                )}
-                {/* --- End Token to Dollar Calculation & Explanation --- */}
+                  )}
+                </div>
               </div>
             </div>
-            {/* --- End Token Breakdown --- */}
-          </div>
+          )}
            <button
             onClick={() => setShowSummary(false)}
             className="mt-4 px-4 py-2 bg-emerald-600 text-gray-800 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium shadow-sm disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"

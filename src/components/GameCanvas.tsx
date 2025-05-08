@@ -14,6 +14,8 @@ class RideScene extends Phaser.Scene {
   private distanceFeet = 0;
   private readonly setDistance = useRideStore.getState().setDistance;
   private isAnimating = useRideStore.getState().isAnimating;
+  private movementDisabledMessageText: Phaser.GameObjects.Text | null = null;
+  private unsubscribe: (() => void) | null = null;
 
   // Configurable rider scale and vertical position
   private readonly riderScale = 0.83; // Adjusted for 144px sprites (was 2.5 for 48px sprites)
@@ -23,41 +25,6 @@ class RideScene extends Phaser.Scene {
 
   constructor() {
     super({ key: 'RideScene' });
-    
-    // Subscribe to store changes
-    useRideStore.subscribe((state) => {
-      const newIsAnimating = state.isAnimating;
-      if (this.isAnimating !== newIsAnimating) {
-        this.isAnimating = newIsAnimating;
-        // Reset distance when starting a new ride
-        if (newIsAnimating) {
-          this.distanceFeet = 0;
-          this.setDistance(0);
-        }
-        // Update animation state if rider exists
-        if (this.rider) {
-          if (newIsAnimating && this.cursors.right?.isDown) {
-            this.rider.play('ride');
-          } else {
-            this.rider.stop();
-          }
-        }
-      }
-    });
-  }
-
-  preload() {
-    // Swap these paths for your own sprite sheet / background
-    this.load.image('bg', '/assets/bg.png');
-    this.load.spritesheet('rider', '/assets/rider.png', {
-      frameWidth: 144,
-      frameHeight: 144,
-    });
-
-    // Add loading error handlers
-    this.load.on('loaderror', (file: any) => {
-      console.error('Error loading file:', file.key);
-    });
   }
 
   create() {
@@ -106,6 +73,81 @@ class RideScene extends Phaser.Scene {
     const keyboard = this.input.keyboard;
     if (!keyboard) throw new Error('Keyboard not available');
     this.cursors = keyboard.createCursorKeys();
+
+    // Set up store subscription after scene is initialized
+    let currentMovementDisabledMessage = useRideStore.getState().movementDisabledMessage;
+    
+    this.unsubscribe = useRideStore.subscribe((state) => {
+      const newIsAnimating = state.isAnimating;
+      if (this.isAnimating !== newIsAnimating) {
+        this.isAnimating = newIsAnimating;
+        // Reset distance when starting a new ride
+        if (newIsAnimating) {
+          this.distanceFeet = 0;
+          this.setDistance(0);
+        }
+        // Update animation state if rider exists
+        if (this.rider) {
+          if (newIsAnimating && this.cursors.right?.isDown) {
+            this.rider.play('ride');
+          } else {
+            this.rider.stop();
+          }
+        }
+        // Update message display when animation state changes
+        this.updateDisabledMessageDisplay(state.movementDisabledMessage);
+      }
+
+      // Handle movement disabled message changes
+      if (currentMovementDisabledMessage !== state.movementDisabledMessage) {
+        currentMovementDisabledMessage = state.movementDisabledMessage;
+        this.updateDisabledMessageDisplay(currentMovementDisabledMessage);
+      }
+    });
+
+    // Clean up subscription when scene is destroyed
+    this.events.on('destroy', () => {
+      if (this.unsubscribe) {
+        this.unsubscribe();
+        this.unsubscribe = null;
+      }
+    });
+  }
+
+  private updateDisabledMessageDisplay(message: string | null) {
+    if (this.movementDisabledMessageText) {
+      this.movementDisabledMessageText.destroy();
+      this.movementDisabledMessageText = null;
+    }
+
+    if (message && !this.isAnimating) {
+      this.movementDisabledMessageText = this.add.text(
+        this.scale.width / 2,
+        this.scale.height / 3,
+        message,
+        { 
+          font: '24px Arial', 
+          color: '#ffffff', 
+          backgroundColor: '#000000aa',
+          padding: { x: 10, y: 5 },
+          align: 'center' 
+        }
+      ).setOrigin(0.5).setDepth(100);
+    }
+  }
+
+  preload() {
+    // Swap these paths for your own sprite sheet / background
+    this.load.image('bg', '/assets/bg.png');
+    this.load.spritesheet('rider', '/assets/rider.png', {
+      frameWidth: 144,
+      frameHeight: 144,
+    });
+
+    // Add loading error handlers
+    this.load.on('loaderror', (file: any) => {
+      console.error('Error loading file:', file.key);
+    });
   }
 
   update(_: number, delta: number) {
