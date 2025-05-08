@@ -3,19 +3,19 @@ Temporal ridesharing demo application that integrates with Stripe's
 [Stripe's usage-based billing](https://docs.stripe.com/billing/subscriptions/usage-based).
 It's implemented in TypeScript and you can see it in action during  
 this demonstration from the Stripe Sessions conference (the demo starts 
-at 13:09 in the video):
+at 13:09):
 
 [![Integrating Temporal to manage your payment workflows](https://img.youtube.com/vi/2HoRDOgo6xM/0.jpg)](https://www.youtube.com/watch?v=2HoRDOgo6xM)
 
 
 The application is implemented in TypeScript and composed of three parts, 
-each with a corresponding subdirectory containing the relevant code.
+each in a corresponding subdirectory containing the relevant code.
 
-| `frontend` | TODO - add description of frontend code                          |
-|------------|------------------------------------------------------------------|
-| `api`      | TODO - add description of API code                               |
-|------------|------------------------------------------------------------------|
-| `backend`  | Temporal Workflow and Activities for ride management and billing |
+| Subdirectory | Description
+|--------------|------------------------------------------------------------------|
+| `frontend`   | TODO - add description of frontend code                          |
+| `api`        | TODO - add description of API code                               |
+| `backend`    | Temporal Workflow and Activities for ride management and billing |
 
 
 # TODO - need to revise the part below 
