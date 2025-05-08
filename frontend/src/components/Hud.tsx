@@ -39,6 +39,7 @@ export default function Hud() {
   const [isRequestTimedOut, setIsRequestTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const initializingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const summaryDismissedRef = useRef(false);
 
   // Timer effect for localElapsedSeconds
   useEffect(() => {
@@ -123,6 +124,7 @@ export default function Hud() {
       setIsAnimating(shouldAnimate);
       setMovementDisabledMessage(null);
       setShowSummary(false);
+      summaryDismissedRef.current = false;
       setWorkflowId(dataResponse.workflowId);
     },
     onError: (error: Error) => {
@@ -284,6 +286,15 @@ export default function Hud() {
   // Effect to process data from getRideState API poll
   useEffect(() => {
     if (rideStateData) {
+      // Handle ENDED phase first
+      if (rideStateData.status.phase === 'ENDED') {
+        setIsRideActive(false);
+        setIsAnimating(false);
+        setShowSummary(true);
+        setMovementDisabledMessage('Ride ended. Press "Unlock Scooter" to start a new ride.');
+        return; // Exit early to prevent other state updates
+      }
+
       // Update tokens from server data
       setTokens(rideStateData.status.tokens.total);
 
@@ -291,7 +302,9 @@ export default function Hud() {
       setElapsed(fmtTime(localElapsedSeconds));
 
       // Update animation state based on ride phase
-      const shouldAnimate = rideStateData.status.phase !== 'FAILED' && rideStateData.status.phase !== 'BLOCKED';
+      const shouldAnimate = rideStateData.status.phase !== 'FAILED' && 
+                           rideStateData.status.phase !== 'BLOCKED' &&
+                           rideStateData.status.phase !== 'ENDED' as string;
       setIsAnimating(shouldAnimate);
       
       // Set appropriate movement disabled message based on ride state
