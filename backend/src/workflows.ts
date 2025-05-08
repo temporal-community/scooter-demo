@@ -150,7 +150,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
         isApprovalRequired = true;
         rideStatus.phase = 'BLOCKED';
 
-        const notApprovedInTime = !(await condition(() => ! isApprovalRequired, '30 sec'));
+        const notApprovedInTime = !(await condition(() => ! isApprovalRequired, '1 min'));
         if (notApprovedInTime) {
           // end the Workflow Execution (and the ride)
           return rideStatus;
