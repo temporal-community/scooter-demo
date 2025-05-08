@@ -122,11 +122,11 @@ class RideScene extends Phaser.Scene {
 
     if (message && !this.isAnimating) {
       this.movementDisabledMessageText = this.add.text(
-        this.scale.width / 2,
-        this.scale.height / 3,
+        this.scale.width * 0.2,
+        this.scale.height / 4,
         message,
         { 
-          font: '24px Arial', 
+          font: '18px Arial',
           color: '#ffffff', 
           backgroundColor: '#000000aa',
           padding: { x: 10, y: 5 },

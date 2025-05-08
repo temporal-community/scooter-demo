@@ -7,7 +7,7 @@ export interface RideStateResponse {
   pricePerThousand: number;
   currency: string;
   status: {
-    phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED';
+    phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED' | 'BLOCKED';
     startedAt: string;
     lastMeterAt: string;
     endedAt?: string;
