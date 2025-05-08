@@ -1,0 +1,20 @@
+{
+    "extends": "@tsconfig/node18/tsconfig.json",
+    "compilerOptions": {
+      "module": "CommonJS",
+      "moduleResolution": "node",
+      "declaration": true,
+      "declarationMap": true,
+      "sourceMap": true,
+      "rootDir": "./src",
+      "outDir": "./lib",
+      "strict": true,
+      "esModuleInterop": true, // Enables compatibility with CommonJS modules that use default exports
+      "skipLibCheck": true, // Skips type checking of declaration files from node_modules
+      "forceConsistentCasingInFileNames": true, // Ensures consistent casing in file names
+      "resolveJsonModule": true // Allows importing .json files
+    },
+    "include": ["src/**/*.ts"], // Specifies which TypeScript files to include in compilation
+    "exclude": ["node_modules", "**/*.spec.ts"] // Specifies files/folders to exclude from compilation
+  }
+  
