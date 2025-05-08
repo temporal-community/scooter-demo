@@ -291,12 +291,14 @@ export default function Hud() {
       setElapsed(fmtTime(localElapsedSeconds));
 
       // Update animation state based on ride phase
-      const shouldAnimate = rideStateData.status.phase !== 'FAILED';
+      const shouldAnimate = rideStateData.status.phase !== 'FAILED' && rideStateData.status.phase !== 'BLOCKED';
       setIsAnimating(shouldAnimate);
       
       // Set appropriate movement disabled message based on ride state
       if (!shouldAnimate) {
-        if (rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND') {
+        if (rideStateData.status.phase === 'BLOCKED') {
+          setMovementDisabledMessage('Approve ride signal required to continue');
+        } else if (rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND') {
           setMovementDisabledMessage('Account not found. Please try a different email address.');
         } else if (rideStateData.status.phase === 'FAILED') {
           setMovementDisabledMessage('Ride failed. Please try again.');
