@@ -13,8 +13,8 @@ each in a corresponding subdirectory containing the relevant code.
 
 | Subdirectory | Description
 |--------------|------------------------------------------------------------------|
-| `frontend`   | TODO - add description of frontend code                          |
-| `api`        | TODO - add description of API code                               |
+| `frontend`   | Browser-based UI                                                 |
+| `api`        | API that interfaces between the browser and Temporal workflows   |
 | `backend`    | Temporal Workflow and Activities for ride management and billing |
 
 
