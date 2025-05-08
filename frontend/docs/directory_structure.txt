@@ -1,0 +1,19 @@
+Suggested directory layout
+
+scooter-demo/
+├─ public/
+│  └─ assets/            # sprites, bg layers, fonts
+├─ src/
+│  ├─ api/
+│  │  └─ rideApi.ts      # stubbed fetch helpers
+│  ├─ components/
+│  │  ├─ GameCanvas.tsx  # Phaser scene wrapper
+│  │  └─ Hud.tsx         # buttons & counters
+│  ├─ stores/
+│  │  └─ rideStore.ts    # Zustand global state
+│  ├─ types/
+│  │  └─ Ride.ts
+│  ├─ App.tsx
+│  ├─ main.tsx
+│  └─ index.css
+└─ vite.config.ts
