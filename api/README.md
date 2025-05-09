@@ -1,12 +1,11 @@
 # Temporal Scooter Rideshare Demo API
 
-**NOTE: This demo requires the frontend and backend to be running.**
+**NOTE: This demo requires the frontend and backend to be 
+running. See the top-level README for details on how to run those **
 
-Found here:
-* Frontend: https://github.com/steveandroulakis/scooter-demo-frontend
-* Backend: https://github.com/tomwheeler/scooter-demo-backend
-
-A Node.js/TypeScript API that interfaces with Temporal for managing scooter ride workflows. This API provides endpoints for starting, ending, and tracking scooter rides.
+This is a Node.js/TypeScript API that interfaces with Temporal for 
+managing scooter ride workflows. This API provides endpoints for 
+starting, ending, and tracking scooter rides.
 
 ## Features
 
@@ -21,29 +20,6 @@ A Node.js/TypeScript API that interfaces with Temporal for managing scooter ride
 - Node.js (v18 or higher recommended)
 - npm
 - Temporal server running locally or accessible via environment variables
-
-## Installation
-
-1. Clone the repository
-2. Install dependencies:
-```bash
-npm install
-```
-
-## Configuration
-
-Create a `.env` file in the root directory with the following variables:
-```
-TEMPORAL_HOST=localhost
-TEMPORAL_PORT=7233
-```
-
-## Running the API
-
-Development mode with hot reload:
-```bash
-npm run dev
-```
 
 ## API Endpoints
 

@@ -1,3 +1,4 @@
 # Scooter Demo Backend 
 
-TODO - document this (in conjunction with what's in the top-level README)
+See the top-level README file for information about how to start 
+the application backend.

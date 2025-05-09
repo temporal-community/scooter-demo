@@ -1,15 +1,16 @@
-# scooter-demo
-Temporal ridesharing demo application that integrates with Stripe's 
+# Temporal ridesharing demo application
+This repository contains code for a ridesharing demo application that 
+highlights Temporal's durability and support for external interactions.
+It's implemented in TypeScript and integrates with Stripe's 
 [Stripe's usage-based billing](https://docs.stripe.com/billing/subscriptions/usage-based).
-It's implemented in TypeScript and you can see it in action during  
-this demonstration from the Stripe Sessions conference (the demo starts 
-at 13:09):
+Want to see it in action? Check out this demonstration from the Stripe 
+Sessions conference (the demo starts at 13:09):
 
 [![Integrating Temporal to manage your payment workflows](https://img.youtube.com/vi/2HoRDOgo6xM/0.jpg)](https://www.youtube.com/watch?v=2HoRDOgo6xM)
 
 
-The application is implemented in TypeScript and composed of three parts, 
-each in a corresponding subdirectory containing the relevant code.
+### Navigating the Codebase
+The application is composed of three parts, each in its own subdirectory.
 
 | Subdirectory | Description
 |--------------|------------------------------------------------------------------|
@@ -17,17 +18,138 @@ each in a corresponding subdirectory containing the relevant code.
 | `api`        | API that interfaces between the browser and Temporal workflows   |
 | `backend`    | Temporal Workflow and Activities for ride management and billing |
 
+## Running the Application
 
-# TODO - need to revise the part below 
-Create a concise (but comprehensive) set of instructions for how to launch
-the application and recreate what we showed in the demo.
+There are five steps to running the application:
+
+1. Set up usage-based billing in Stripe
+2. Start the Temporal Service 
+3. Run the application backend
+4. Run the application API
+5. Run the application frontend
 
 
-## Stripe Setup Instructions 
-This demo highlights Temporal's durability and support for external 
-interactions by modeling a pay-per-use ride. The Workflow uses Stripe 
-for usage-based billing. See ([this document](docs/stripe-notes.md) for
-step-by-step instructions for the prerequisite Stripe setup). 
+### Set Up Usage-Based Billing in Stripe
+See ([this document](docs/stripe-setup.md) for step-by-step instructions 
+for the prerequisite Stripe setup. 
+
+### Start the Temporal Service
+
+The sample is configured by default to connect to a 
+[local Temporal Service](https://docs.temporal.io/cli#starting-the-temporal-server) running on `localhost:7233`. You can use this command to start it:
+
+```command
+temporal server start-dev
+```
+
+To instead connect to Temporal Cloud, set the following environment 
+variables, replacing them with your own Temporal Cloud credentials.
+The instructions below assume the use of a Bourne-compatible UNIX
+shell (such as `bash`), so you'll need to adjust them slightly if
+using a different shell (such as Windows `cmd.exe` or Powershell). 
+
+With mTLS:
+
+```bash
+export TEMPORAL_ADDRESS=testnamespace.sdvdw.tmprl.cloud:7233
+export TEMPORAL_NAMESPACE=testnamespace.sdvdw
+export TEMPORAL_CLIENT_CERT_PATH="/path/to/file.pem"
+export TEMPORAL_CLIENT_KEY_PATH="/path/to/file.key"
+```
+
+With an API key:
+```bash
+export TEMPORAL_ADDRESS=us-west-2.aws.api.temporal.io:7233
+export TEMPORAL_NAMESPACE=testnamespace.sdvdw
+export TEMPORAL_API_KEY="your-api-key"
+```
+
+If using API key authentication, ensure that the `TEMPORAL_CLIENT_CERT_PATH` 
+and `TEMPORAL_CLIENT_KEY_PATH` environment variables are not set.
+
+
+### Run the Application Backend
+
+To run the application backend, first open a terminal and change to the 
+`backend` directory. 
+
+```command
+cd backend
+```
+
+Next, set the `STRIPE_API_KEY` environment variable in that terminal to 
+the value of your Stripe secret key. 
+
+```bash
+export STRIPE_API_KEY=sk_test_34RZ6V4AJr...kFq
+```
+
+Now, install the project dependencies:
+
+```bash
+npm install
+```
+
+Finally, start the Temporal Worker for the backend:
+
+```
+npm run start
+```
+
+### Run the Application API
+
+Open another terminal and change to the `api` directory. 
+
+```command
+cd api
+```
+
+Install the application API dependencies:
+
+```bash
+npm install
+```
+
+Configure the application API by creating a `.env` file in the root 
+directory with the following variables (adjust these if using Temporal
+Cloud or other non-local Temporal Service):
+
+```
+TEMPORAL_HOST=localhost
+TEMPORAL_PORT=7233
+```
+
+Start the API server in developer mode with hot reload:
+
+```bash
+npm run dev
+```
+
+### Run the Application Frontend
+
+Open another terminal and change to the `frontend` directory. 
+
+```command
+cd frontend
+```
+
+Install the dependencies for the frontend:
+
+```bash
+pnpm install
+```
+
+Next, start the development server:
+
+```bash
+pnpm dev
+```
+
+The app should now be available at `http://localhost:5173`, although 
+it may use a different port number if that one is already in use. 
+You can navigate to the URL it displays to begin the demo.
+
+
 
 ## Why Temporal?
 This is a natural fit for Temporal due to several key advantages:
@@ -58,45 +180,6 @@ This is a natural fit for Temporal due to several key advantages:
   current state and progress for each ride, regardless of whether they 
   have recently completed or are still running. 
 
--- 
-
-
-### Running this sample
-
-The sample is configured by default to connect to a 
-[local Temporal Service](https://docs.temporal.io/cli#starting-the-temporal-server) running on `localhost:7233`. You can use this command to start it:
-
-```command
-temporal server start-dev
-```
-
-To instead connect to Temporal Cloud, set the following environment 
-variables, replacing them with your own Temporal Cloud credentials.
-
-With mTLS:
-
-```bash
-TEMPORAL_ADDRESS=testnamespace.sdvdw.tmprl.cloud:7233
-TEMPORAL_NAMESPACE=testnamespace.sdvdw
-TEMPORAL_CLIENT_CERT_PATH="/path/to/file.pem"
-TEMPORAL_CLIENT_KEY_PATH="/path/to/file.key"
-```
-
-With an API key:
-```bash
-TEMPORAL_ADDRESS=us-west-2.aws.api.temporal.io:7233
-TEMPORAL_NAMESPACE=testnamespace.sdvdw
-TEMPORAL_API_KEY="your-api-key"
-# ensure TEMPORAL_CLIENT_CERT_PATH and TEMPORAL_CLIENT_KEY_PATH are not set
-```
-
-`npm install` to install dependencies.
-
-Run `npm run start` to start the Worker. (You can also use 
-[Nodemon](https://www.npmjs.com/package/nodemon) to watch for 
-changes and restart the Worker automatically by running 
-`npm run start.watch`.)
-
 ## Demonstration Scenario Summary
 Before performing any demonstration, you must do some one-time setup
 in Stripe, as [documented in these instructions](../demo/stripe-notes.md)
@@ -118,30 +201,15 @@ In this scenario, everything works as expected on the first try. There
 are no failures. The e-mail address must correspond to the one you set
 up in Stripe, as per [these instructions](../demo/stripe-notes.md).
 
-```command
-npm run workflow -- --scooterId=1230 --emailAddress=maria@example.com
-```
+Use scooter ID 1230 for this scenario.
 
 This starts the Workflow Execution, which bills the user some number 
 of tokens for an initial "unlock the scooter" charge and consumes some
 additional number of tokens for each subsequent 15 seconds of use. 
 
-In a third terminal (where you need not set `STRIPE_API_KEY`, send the 
-`addDistance` Signal one or more times during the ride (this represents
-the scooter having traveled 100 feet, consuming some number of tokens 
-that are then reported to Stripe's usage-based billing):
+When you are ready to end the ride, click the **End Ride** button in the 
+UI.
 
-```command
-npm run signal -- --scooterId=1230 --addDistance
-```
-
-When you are ready to end the ride, send the `endRide` signal. This will 
-cause the Workflow Execution to end, at which point no additional tokens
-will be consumed.
-
-```command
-npm run signal -- --scooterId=1230 --endRide
-```
 
 
 ### Network Outage
@@ -152,24 +220,8 @@ to a (simulated) network outage. On the fourth attempt, the failure
 resolves itself, after which the Activity will succeed.
 
 The steps for this scenario are identical to the ones above, except 
-for the scooter ID (the `FindStripeCustomerID` Activity will simulate
-this outage only when invoked with a scooter ID of `1234`. 
+for the scooter ID, which must be `1234` (this triggers the failure). 
 
-
-**Start the Workflow Execution**
-```command
-npm run workflow -- --scooterId=1234 --emailAddress=maria@example.com
-```
-
-**Add 100 feet of distance traveled**
-```command
-npm run signal -- --scooterId=1234 --addDistance
-```
-
-**End the ride**
-```command
-npm run signal -- --scooterId=1234 --endRide
-```
 
 ### Non-Retryable Failure
 In this scenario, the Activity that invokes a Stripe API to look up 
@@ -178,16 +230,14 @@ is no record for that customer in Stripe. Unlike a network outage,
 we'd prefer to end the Workflow Execution in this case instead of 
 retrying the call again and again. 
 
+For this scenario, use `1233` as the scooter ID and `test@example.com` 
+as the email address when starting the ride. 
+
 Temporal's Retry Policies support not only defining the cadence of 
 retry attempts, but also designating certain error types as non-retryable. 
 The specific exception type in this scenario is `CustomerNotFoundException`
 (defined in the `src/activities.ts` file) and the Retry Policy defined in 
 `src/workflows.ts` specifies this type of exception as non-retryable.
-
-**Start the Workflow Execution with an invalid e-mail address**
-```command
-npm run workflow -- --scooterId=1235 --emailAddress=bogus@example.com
-```
 
 
 ### Discover and Fix a Bug in the Running Application
@@ -207,15 +257,25 @@ Activity Execution to fail and will also identify the specific line
 of code responsible.
 
 
-**Start the Workflow Execution with a scooter ID that triggers the bug**
-```command
-npm run workflow -- --scooterId=1239 --emailAddress=maria@example.com
-```
+To trigger the bug, use a scooter ID that contains a 9, such as `1239`.
 
 Wait for the Activity to fail, use the Temporal Web UI to identify the 
-source of the failurem, and then fix the bug by changing `0-8` in the 
+source of the failure, and then fix the bug by changing `0-8` in the 
 regex to `0-9`. Afterwards, you will need to kill and re-run the 
 `npm run start` process you started in the other terminal for the change 
 to take effect (if not using nodemon to do that automatically). Once 
 you have done these things, you should find that the Activity will 
 succeed upon the next retry attempt. 
+
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is open source and available under the MIT License.
