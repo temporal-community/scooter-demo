@@ -1,12 +1,12 @@
 # Temporal Scooter Rideshare Demo Frontend
 
-**NOTE: This demo requires the API and backend to be running.**
+**NOTE: This demo requires the API and backend to be running.
+See the top-level README for information about how to start those. **
 
-Found here:
-* API: https://github.com/steveandroulakis/scooter-demo-api
-* Backend: https://github.com/tomwheeler/scooter-demo-backend
-
-A playful browser-based demo that simulates a scooter rideshare experience with a 2D side-scrolling game interface. This demo showcases how Temporal-backed ride workflows can be integrated into a modern web application.
+This is a playful browser-based demo that simulates a scooter rideshare 
+experience with a 2D side-scrolling game interface. This demo showcases 
+how Temporal-backed ride Workflows can be integrated into a modern web 
+application.
 
 ## Features
 
@@ -30,29 +30,6 @@ A playful browser-based demo that simulates a scooter rideshare experience with 
 - Node.js 18+ 
 - pnpm (recommended) or npm
 
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/your-org/scooter-demo.git
-cd scooter-demo
-```
-
-2. Install dependencies:
-```bash
-pnpm install
-```
-
-## Development
-
-Start the development server:
-
-```bash
-pnpm dev
-```
-
-The app will be available at `http://localhost:5173`
-
 ## Project Structure
 
 ```
@@ -69,20 +46,10 @@ scooter-demo/
 
 ## API Integration
 
-The demo includes a mock API that can be replaced with real endpoints. The API contract includes:
+The demo includes a mock API that can be replaced with real endpoints. 
+The API contract includes:
 
 - `POST /ride/start` - Start a new ride
 - `POST /ride/end` - End current ride
 - `GET /ride/state` - Get current ride status
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is open source and available under the MIT License.
