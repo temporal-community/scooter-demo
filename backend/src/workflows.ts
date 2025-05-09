@@ -124,7 +124,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
         const distanceTokens = await PostDistanceCharge(input);
         rideStatus.tokens.distance += distanceTokens;
         rideStatus.tokens.total += distanceTokens;
-        rideStatus.distanceFt += 12;
+        rideStatus.distanceFt += 100;
       }
       if (hasRideEnded) break;
 
