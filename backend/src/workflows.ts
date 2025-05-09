@@ -28,7 +28,7 @@ export const getRideDetailsQuery = defineQuery('getRideDetails');
 // After this many tokens have been consumed in a single ride, 
 // the Workflow Execution blocks until it receives the approveRide
 // Signal. It ends if this approval isn't received quickly enough.  
-const TokenConsumptionApprovalLimit = 100;
+const TokenConsumptionApprovalLimit = 70;
 
 export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatus> {
   let hasRideEnded = false;
@@ -150,13 +150,20 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
         isApprovalRequired = true;
         rideStatus.phase = 'BLOCKED';
 
-        const notApprovedInTime = !(await condition(() => ! isApprovalRequired, '1 minute'));
-        if (notApprovedInTime) {
+        const approvalOrEnd = !(await condition(() => !isApprovalRequired || hasRideEnded, '1 minute'));
+        if (approvalOrEnd) {
           // end the Workflow Execution (and the ride)
           await EndRide(input);
           rideStatus.phase = 'ENDED';
           rideStatus.endedAt = new Date().toISOString();
           return rideStatus;
+        }
+
+        if (hasRideEnded) {
+          await EndRide(input);
+          rideStatus.phase = 'ENDED';
+          rideStatus.endedAt = new Date().toISOString();
+          return rideStatus;        // leave the workflow instantly
         }
       }
       // If SIGNAL_EVENT, loop reiterates — existing timer remains untouched
@@ -164,7 +171,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
     // -------------------------------------------
 
     // Activity: End ride
-    if (rideStatus.phase === 'ACTIVE') {
+    if (rideStatus.phase === 'ACTIVE' || rideStatus.phase === 'BLOCKED') {
       await EndRide(input);
       rideStatus.phase = 'ENDED';
       rideStatus.endedAt = new Date().toISOString();

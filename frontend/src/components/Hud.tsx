@@ -12,6 +12,8 @@ const fmtTime = (sec: number): string => {
 };
 
 export default function Hud() {
+  const ACTIVE_PHASES = ['INITIALIZING', 'ACTIVE', 'BLOCKED'];
+  
   const {
     distance, // This is from useRideStore, now primarily driven by client-side simulation
     elapsed,
@@ -40,6 +42,7 @@ export default function Hud() {
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const initializingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const summaryDismissedRef = useRef(false);
+  const endingRef = useRef(false);   // local only, never rendered
 
   // Timer effect for localElapsedSeconds
   useEffect(() => {
@@ -144,13 +147,19 @@ export default function Hud() {
       if (!workflowId) throw new Error('No active workflow to end ride');
       return endRide(workflowId);
     },
-    onSuccess: () => {
-      setIsRideActive(false);
+    onMutate: () => {
+      endingRef.current = true;
+      setIsRideActive(false);   // freeze timers & animation
       setIsAnimating(false);
-      setMovementDisabledMessage('Ride ended. Press "Unlock Scooter" to start a new ride.');
-      setShowSummary(true);
+      setShowSummary(true);     // pop the summary right away
+    },
+    onSuccess: () => {
+      endingRef.current = false;   // backend will now say phase === 'ENDED'
     },
     onError: (error: Error) => {
+      endingRef.current = false;
+      setShowSummary(false);       // roll back
+      setIsRideActive(true);
       if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
         showTemporaryError('Unable to connect to the server. Please check if the API is running.');
       } else {
@@ -160,13 +169,6 @@ export default function Hud() {
       setMovementDisabledMessage('Unable to end ride. Please try again.');
     }
   });
-
-  // Effect to clean up workflowId when summary is dismissed and ride is not active
-  useEffect(() => {
-    if (!showSummary && !isRideActive) {
-      setWorkflowId(null);
-    }
-  }, [showSummary, isRideActive, setWorkflowId]);
 
   // Mutation to report distance increments to the API
   const addDistanceMutation = useMutation({
@@ -193,8 +195,8 @@ export default function Hud() {
       }
       return response;
     },
-    enabled: !!workflowId && isRideActive,
-    refetchInterval: 500,
+    enabled: !!workflowId,
+    refetchInterval: 200,
   });
 
   // Effect to handle INITIALIZING timeout
@@ -285,44 +287,49 @@ export default function Hud() {
 
   // Effect to process data from getRideState API poll
   useEffect(() => {
-    if (rideStateData) {
-      // Handle ENDED phase first
-      if (rideStateData.status.phase === 'ENDED') {
-        setIsRideActive(false);
-        setIsAnimating(false);
-        setShowSummary(true);
-        setMovementDisabledMessage('Ride ended. Press "Unlock Scooter" to start a new ride.');
-        return; // Exit early to prevent other state updates
-      }
+    if (!rideStateData) return;
 
-      // Update tokens from server data
-      setTokens(rideStateData.status.tokens.total);
+    const { phase, tokens, lastError } = rideStateData.status;
+    const rideIsActive = ACTIVE_PHASES.includes(phase);
 
-      // Update elapsed time in store using the local component timer
-      setElapsed(fmtTime(localElapsedSeconds));
-
-      // Update animation state based on ride phase
-      const shouldAnimate = rideStateData.status.phase !== 'FAILED' && 
-                           rideStateData.status.phase !== 'BLOCKED' &&
-                           rideStateData.status.phase !== 'ENDED' as string;
-      setIsAnimating(shouldAnimate);
-      
-      // Set appropriate movement disabled message based on ride state
-      if (!shouldAnimate) {
-        if (rideStateData.status.phase === 'BLOCKED') {
-          setMovementDisabledMessage('Approve ride signal required to continue');
-        } else if (rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND') {
-          setMovementDisabledMessage('Account not found. Please try a different email address.');
-        } else if (rideStateData.status.phase === 'FAILED') {
-          setMovementDisabledMessage('Ride failed. Please try again.');
-        } else {
-          setMovementDisabledMessage('Movement disabled. Please try again.');
-        }
-      } else {
-        setMovementDisabledMessage(null);
-      }
+    // Show summary when ride ends
+    if (phase === 'ENDED' && !showSummary) {
+      setShowSummary(true);
     }
-  }, [rideStateData, setTokens, setElapsed, localElapsedSeconds, setIsAnimating, setMovementDisabledMessage]);
+
+    // Drive the local flag straight from the server
+    setIsRideActive(rideIsActive);
+
+    // Kill the summary UI only if we aren't in the middle of an optimistic end
+    if (rideIsActive && showSummary && !endingRef.current) {
+      setShowSummary(false);
+    }
+
+    // Update tokens from server data
+    setTokens(tokens.total);
+
+    // Update elapsed time in store using the local component timer
+    setElapsed(fmtTime(localElapsedSeconds));
+
+    // Update animation state based on ride phase
+    const shouldAnimate = phase !== 'FAILED' && phase !== 'ENDED' && phase !== 'BLOCKED';
+    setIsAnimating(shouldAnimate);
+    
+    // Set appropriate movement disabled message based on ride state
+    if (!shouldAnimate) {
+      if (phase === 'BLOCKED') {
+        setMovementDisabledMessage('Approve ride signal required to continue');
+      } else if (lastError === 'ACCOUNT_NOT_FOUND') {
+        setMovementDisabledMessage('Account not found. Please try a different email address.');
+      } else if (phase === 'FAILED') {
+        setMovementDisabledMessage('Ride failed. Please try again.');
+      } else {
+        setMovementDisabledMessage('Ride ended. Please start a new ride to continue.');
+      }
+    } else {
+      setMovementDisabledMessage(null);
+    }
+  }, [rideStateData, localElapsedSeconds, setTokens, setElapsed, setIsAnimating, setMovementDisabledMessage, showSummary]);
 
   // Effect to call addDistanceApi when 100-ft boundaries are crossed
   // This now relies on 'distance' from useRideStore, which is updated by client simulation.
@@ -441,7 +448,11 @@ export default function Hud() {
             </div>
           )}
            <button
-            onClick={() => setShowSummary(false)}
+            onClick={() => {
+              setShowSummary(false);   // hide the panel
+              setWorkflowId(null);     // stop the poller
+              reset();                 // clear distance / elapsed / tokens
+            }}
             className="mt-4 px-4 py-2 bg-emerald-600 text-gray-800 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium shadow-sm disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
           >
             Dismiss Summary
@@ -469,6 +480,13 @@ export default function Hud() {
               onChange={(e) => {
                 setScooterId(e.target.value);
                 setScooterIdError(''); // Clear error when user types
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isRideActive && !start.isPending && !showSummary) {
+                  if (validateScooterId(scooterId)) {
+                    start.mutate();
+                  }
+                }
               }}
               disabled={isRideActive || start.isPending}
             />
@@ -536,7 +554,7 @@ export default function Hud() {
       )}
 
       {/* Live Stats Display: Show if ride is active (and summary is not shown) */}
-      {isRideActive && rideStateData?.status?.phase !== 'FAILED' && ( // Don't show stats if phase is FAILED
+      {ACTIVE_PHASES.includes(rideStateData?.status?.phase ?? '') && ( // Don't show stats if phase is FAILED
         <div className="mt-6 space-y-1 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
           <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />

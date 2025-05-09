@@ -51,7 +51,7 @@ export async function FindStripeCustomerID(data: RideDetails): Promise<string> {
 
 export async function BeginRide(data: RideDetails): Promise<number> {
     // Verify that this is a valid scooter ID (must contain only digits)
-    if (! /^[0-9]+$/.test(data.scooterId!)) { // THIS IS A BUG, comment me!
+    if (! /^[0-8]+$/.test(data.scooterId!)) { // THIS IS A BUG, comment me!
 	// if (! /^[0-9]+$/.test(data.scooterId!)) { // Uncomment me to fix!
         throw new Error(`Invalid scooter ID ${data.scooterId}`);
     }
