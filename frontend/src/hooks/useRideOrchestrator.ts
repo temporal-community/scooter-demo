@@ -47,15 +47,12 @@ export const useRideOrchestrator = (
 
   const [showSummary, setShowSummary] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isRequestTimedOut, setIsRequestTimedOut] = useState(false); // Not used in provided snippet, but kept
+  const [isRequestTimedOut, setIsRequestTimedOut] = useState(false); 
 
   const lastBucketRef = useRef(0);
   const errorTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  // const requestTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined); // Not used
-  // const initializingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined); // Not used
   const endingRef = useRef(false);
 
-  // Refs to manage state during dismissal to prevent race conditions with URL updates
   const previousWorkflowIdOnDismissRef = useRef<string | null | undefined>(null);
   const justDismissedFlagRef = useRef(false);
   const dismissTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -85,7 +82,7 @@ export const useRideOrchestrator = (
       setIsRideActiveState(true);
       storeSetIsAnimating(true);
       storeSetMovementDisabledMessage(null);
-      setShowSummary(false);
+      setShowSummary(false); // Ensure summary is not shown on new ride start
       setInternalWorkflowId(dataResponse.workflowId);
       storeSetWorkflowId(dataResponse.workflowId);
       if (navigate) {
@@ -101,20 +98,23 @@ export const useRideOrchestrator = (
       }
       storeSetIsAnimating(false);
       storeSetMovementDisabledMessage('Unable to start ride. Please try again.');
+      setShowSummary(false); // Explicitly hide summary on start error
     },
     onEndMutate: () => {
       endingRef.current = true;
-      setIsRideActiveState(false);
+      setIsRideActiveState(false); 
       storeSetIsAnimating(false);
-      setShowSummary(true);
+      // setShowSummary(true); // Summary visibility will be determined by poller based on final state (ENDED or FAILED)
     },
     onEndSuccess: () => {
       endingRef.current = false;
       console.log('Ride end signal successful for workflow:', internalWorkflowId);
+      // Poller will update with ENDED state.
     },
     onEndError: (error: Error) => {
       endingRef.current = false;
       showTemporaryError(error.message || 'Failed to end ride');
+      setShowSummary(false); // If ending fails, don't show summary, rely on error messages/polled FAILED state
     },
     onAddDistanceError: (error: Error) => {
       showTemporaryError(error.message || 'Failed to add distance');
@@ -139,11 +139,11 @@ export const useRideOrchestrator = (
     storeSetElapsed(fmtTime(localElapsedSeconds));
   }, [localElapsedSeconds, storeSetElapsed]);
 
+  // Effect to process data from the poller (rideStateData)
   useEffect(() => {
     if (!internalWorkflowId) {
       setShowSummary(false);
       setIsRideActiveState(false); 
-      // setRideStartTime(null); // Handled by its own effect watching internalWorkflowId
       return; 
     }
 
@@ -168,18 +168,43 @@ export const useRideOrchestrator = (
         }
       }
       
-      if (isEnded || isFailed) {
-        // Only show summary if not in the process of an immediate dismissal that cleared internalWorkflowId
-        // This check is mostly defensive; the primary guard is `if (!internalWorkflowId)` above.
-        if (internalWorkflowId) { 
+      // Updated logic for showing summary:
+      if (isEnded) {
+        // Only show summary if the ride successfully ended.
+        if (internalWorkflowId) { // Ensure we have a workflow context for the summary
             setShowSummary(true);
         }
+        // Calculate final elapsed time for ended rides.
         const finalElapsedSeconds = calculateElapsedSeconds(
           rideStateData.status.startedAt,
           rideStateData.status.endedAt
         );
         storeSetElapsed(fmtTime(finalElapsedSeconds));
+      } else if (isFailed) {
+        // If the ride failed, do NOT show the summary.
+        setShowSummary(false);
+        // The WorkflowFailureDisplay or ErrorMessageDisplay should handle the UI.
+        // Reset or set elapsed time appropriately for a failed ride.
+        // For a start failure, startedAt might be null or same as endedAt.
+        if (rideStateData.status.startedAt && rideStateData.status.endedAt) {
+             const finalElapsedSeconds = calculateElapsedSeconds(
+                rideStateData.status.startedAt,
+                rideStateData.status.endedAt
+            );
+            storeSetElapsed(fmtTime(finalElapsedSeconds));
+        } else if (rideStateData.status.startedAt) {
+            // Failed, but startedAt exists, endedAt might be null if it crashed
+            const finalElapsedSeconds = calculateElapsedSeconds(
+                rideStateData.status.startedAt,
+                undefined // Or Date.now() if we want to show time until failure detection
+            );
+            storeSetElapsed(fmtTime(finalElapsedSeconds));
+        }
+        else {
+            storeSetElapsed(fmtTime(0)); // Default to 0 if critical times are missing (e.g. pre-start failure)
+        }
       } else {
+        // For any other active/initializing phases, summary should not be shown.
         setShowSummary(false);
       }
       
@@ -193,77 +218,54 @@ export const useRideOrchestrator = (
     storeSetElapsed, 
     storeSetMovementDisabledMessage, 
     storeSetIsAnimating, 
-    rideStartTime, // rideStartTime is read, so it's a dependency
-    setRideStartTime, // setRideStartTime is called
-    setIsRideActiveState, // setIsRideActiveState is called
-    setShowSummary // setShowSummary is called
+    rideStartTime, 
+    setRideStartTime,
+    setIsRideActiveState, 
+    setShowSummary 
   ]);
 
   useEffect(() => {
-    // If internalWorkflowId changes (e.g., new ride loaded, or cleared by dismiss/URL change),
-    // reset rideStartTime. The poller effect will set the correct start time if a ride is active.
     setRideStartTime(null);
   }, [internalWorkflowId]);
 
-  // Effect to handle workflowIdFromUrl changes (e.g. direct navigation, page load with ID)
   useEffect(() => {
     if (workflowIdFromUrl) {
-      // There is a workflow ID in the URL.
-
-      // Check if we are in the brief period after dismissing this *specific* workflow ID,
-      // and the navigate('/') call hasn't yet updated the workflowIdFromUrl prop to null/undefined.
       if (justDismissedFlagRef.current && workflowIdFromUrl === previousWorkflowIdOnDismissRef.current) {
         console.log(`Ignoring stale workflowIdFromUrl (${workflowIdFromUrl}) immediately after dismissal.`);
-        return; // Prevent reloading the summary of the just-dismissed ride
+        return; 
       }
-
-      // If the URL's workflow ID is different from the one currently active internally,
-      // or if no workflow is active internally (internalWorkflowId is null), then load it.
       if (workflowIdFromUrl !== internalWorkflowId) {
         console.log(`URL has workflowId ${workflowIdFromUrl}, current internal is ${internalWorkflowId}. Resetting and loading from URL.`);
         storeReset();
         setEmail('');
-        // setIsRideActiveState(false); // Let poller/start logic handle this based on fetched state
-        // setRideStartTime(null); // Effect on internalWorkflowId will handle this
-        setShowSummary(false); // Start with summary hidden; poller will show if necessary
-        
-        setInternalWorkflowId(workflowIdFromUrl); // Load the new workflow
-        storeSetWorkflowId(workflowIdFromUrl); // Keep store in sync
-        refetchRideState(); // Explicitly refetch for the new ID
-        
-        // If we proceed to load, ensure any lingering "dismiss" context is cleared.
+        setShowSummary(false); 
+        setInternalWorkflowId(workflowIdFromUrl); 
+        storeSetWorkflowId(workflowIdFromUrl); 
+        refetchRideState(); 
         if (justDismissedFlagRef.current) {
             justDismissedFlagRef.current = false;
             previousWorkflowIdOnDismissRef.current = null;
             if(dismissTimeoutRef.current) clearTimeout(dismissTimeoutRef.current);
         }
       }
-      // If workflowIdFromUrl === internalWorkflowId, do nothing, it's already the current context.
     } else {
-      // workflowIdFromUrl is null or undefined (e.g., user navigated to '/' or base path).
-      // If an internalWorkflowId is still set, and we weren't just in the process of dismissing,
-      // it means we've navigated away from a specific ride page (e.g., browser back button).
-      // In this case, we should clear the internal ride state.
       if (internalWorkflowId && !justDismissedFlagRef.current) {
         console.log(`URL cleared (now ${workflowIdFromUrl}), and internalWorkflowId (${internalWorkflowId}) was set. Resetting internal state.`);
-        storeReset(); // Reset general store state
+        storeReset(); 
         setShowSummary(false);
         setIsRideActiveState(false);
-        // setRideStartTime(null); // Handled by internalWorkflowId effect
-        setInternalWorkflowId(null); // This is the primary trigger for resetting ride-specific state
-        storeSetWorkflowId(null); // Keep store in sync
+        setInternalWorkflowId(null); 
+        storeSetWorkflowId(null); 
       }
-      // If justDismissedFlagRef.current is true, it means navigate('/') from dismiss just completed.
-      // workflowIdFromUrl is now correctly null/undefined. The flag will clear via its timeout.
     }
   }, [
       workflowIdFromUrl, 
       internalWorkflowId, 
       storeReset, 
       storeSetWorkflowId, 
-      refetchRideState, 
-      // setEmail is not directly used for reset logic here, but for form state
-      // setIsRideActiveState, setShowSummary, setInternalWorkflowId are setters from this hook
+      refetchRideState,
+      // No direct need for setEmail, setIsRideActiveState, setShowSummary, setInternalWorkflowId as deps
+      // because they are either setters from this hook or their changes are driven by other state here.
   ]);
 
   useEffect(() => {
@@ -282,64 +284,51 @@ export const useRideOrchestrator = (
   }, [storeDistance, isRideActiveState, addDistanceMutation, internalWorkflowId]);
   
   useEffect(() => {
-    // Effect for storeWorkflowId changes (e.g. from dev tools or other parts of app)
     if (storeWorkflowId && storeWorkflowId !== internalWorkflowId) {
-      // If store ID changes and differs, update internal to match, triggering load/reset logic
-      // This will also trigger the rideStartTime reset via its dedicated effect.
       console.log(`storeWorkflowId (${storeWorkflowId}) changed and differs from internal (${internalWorkflowId}). Syncing internal.`);
       setInternalWorkflowId(storeWorkflowId);
-      // The workflowIdFromUrl effect might also run if workflowIdFromUrl is also different.
-      // Ensure showSummary is reset if we are loading a new ID from store.
       setShowSummary(false); 
     } else if (!storeWorkflowId && internalWorkflowId) {
-      // If store ID is cleared and we have an internal one, clear internal state.
       console.log(`storeWorkflowId cleared, but internalWorkflowId (${internalWorkflowId}) was set. Resetting.`);
       storeReset();
       setIsRideActiveState(false);
       setShowSummary(false);
-      setInternalWorkflowId(null); // This triggers rideStartTime reset
+      setInternalWorkflowId(null); 
     }
-  }, [storeWorkflowId, internalWorkflowId, storeReset]); // Removed setIsRideActiveState, setShowSummary from deps as they are part of this hook's state
+  }, [storeWorkflowId, internalWorkflowId, storeReset]);
 
   const dismissSummaryAndReset = useCallback((forceResetDueToError = false) => {
     console.log(`Dismissing summary for workflow: ${internalWorkflowId}`);
-    // Store the ID we are dismissing to help the URL effect ignore stale prop
     previousWorkflowIdOnDismissRef.current = internalWorkflowId; 
     justDismissedFlagRef.current = true; 
     
-    // Clear any existing timeout to avoid premature reset of the flag
     if (dismissTimeoutRef.current) {
         clearTimeout(dismissTimeoutRef.current);
     }
 
     if (navigate) {
-      navigate('/', { replace: true }); // This will eventually set workflowIdFromUrl to null/undefined
+      navigate('/', { replace: true }); 
     }
     
-    // Reset all relevant state immediately
     setShowSummary(false);
-    setInternalWorkflowId(null); // This should trigger the effect that nulls rideStartTime
-    storeSetWorkflowId(null);   // This might trigger its own effect if not already null
+    setInternalWorkflowId(null); 
+    storeSetWorkflowId(null);   
     storeReset();
     setIsRideActiveState(false);
-    // setRideStartTime(null); // Effect for internalWorkflowId handles this due to setInternalWorkflowId(null)
     setEmail('');
     setEmailError('');
-    // Keep current scooterId or generate new one? Original code generates new.
     setScooterId(Math.floor(1000 + Math.random() * 9000).toString());
     setScooterIdError('');
-    setErrorMessage(null); // Clear any persistent error messages
+    setErrorMessage(null); 
 
-    // Set a timeout to clear the dismiss flag.
-    // This duration should be long enough for navigate('/') to propagate its change to workflowIdFromUrl.
     dismissTimeoutRef.current = setTimeout(() => {
       console.log("Clearing justDismissedFlagRef and previousWorkflowIdOnDismissRef via timeout.");
       justDismissedFlagRef.current = false;
       previousWorkflowIdOnDismissRef.current = null;
       dismissTimeoutRef.current = undefined;
-    }, 200); // milliseconds (Increased slightly from 150 to 200 for a bit more buffer)
+    }, 200); 
 
-  }, [navigate, storeReset, storeSetWorkflowId, internalWorkflowId]); // internalWorkflowId is a dep because it's read for previousWorkflowIdOnDismissRef
+  }, [navigate, storeReset, storeSetWorkflowId, internalWorkflowId]); 
   
   const handleStartRide = useCallback(async () => {
     const emailVal = validateEmailUtil(email);
@@ -351,10 +340,10 @@ export const useRideOrchestrator = (
     if (emailVal.isValid && scooterIdVal.isValid) {
       const pricePerThousand = 25; 
       const currency = "USD"; 
-      // setRideStartTime(null); // Cleared by onStartSuccess or by internalWorkflowId change if applicable
+      setShowSummary(false); // Ensure summary is hidden before attempting a new start
       await startMutation.mutateAsync({ emailAddress: email, scooterId, pricePerThousand, currency });
     }
-  }, [email, scooterId, startMutation, validateEmailUtil, validateScooterIdUtil]); // Added missing validation util deps
+  }, [email, scooterId, startMutation, validateEmailUtil, validateScooterIdUtil, setShowSummary]); // Added setShowSummary
 
   const handleEndRide = useCallback(async () => {
     if (internalWorkflowId) {
@@ -370,31 +359,45 @@ export const useRideOrchestrator = (
   } else if (endMutation.isPending) {
     rideStatusMessage = "Ending ride...";
   } else if (isLoadingRideState && !!internalWorkflowId && !isRideActiveState && !showSummary) {
+    // If loading state for an existing ID, and not showing summary (e.g. not ENDED)
     rideStatusMessage = `Loading ride state for ${internalWorkflowId}...`;
   } else if (isRideActiveState) {
     rideStatusMessage = "Ride in progress. Use the right arrow key on your keyboard to move.";
-  } else if (showSummary) {
-    // Check if rideStateData exists and phase is ENDED/FAILED before declaring "Ride ended."
-    // This prevents "Ride ended." from showing if summary is true but data is not yet loaded for it.
-    if (rideStateData?.status?.phase === 'ENDED' || rideStateData?.status?.phase === 'FAILED') {
+  } else if (showSummary) { // This will now only be true for successfully ENDED rides
+    if (rideStateData?.status?.phase === 'ENDED') {
         rideStatusMessage = "Ride ended.";
-    } else if (internalWorkflowId) {
-        // If summary is shown but state isn't ENDED/FAILED (e.g. loading summary)
+    } else if (internalWorkflowId) { 
+        // This case should be less common if showSummary is true only for ENDED.
+        // Could be a brief moment if summary is true but rideStateData is slightly delayed.
         rideStatusMessage = `Loading summary for ${internalWorkflowId}...`;
     } else {
-        // Fallback if showSummary is true but no ID (shouldn't happen with current logic)
-        rideStatusMessage = "Summary displayed.";
+        rideStatusMessage = "Summary displayed."; // Fallback
     }
-  } else if (internalWorkflowId && storeTokens > 0 && !isRideActiveState) {
-    // This case might be covered by showSummary if the ride just ended.
-    // If it's a previously loaded ride that was already ended.
-    rideStatusMessage = "Previous ride loaded. Unlock scooter to start a new ride.";
-  } else if (errorMessage) {
-    rideStatusMessage = ""; // Error message will be displayed by ErrorMessageDisplay
+  } else if (rideStateData?.status?.phase === 'FAILED') {
+    // If not showing summary, but the phase is FAILED, let other components (WorkflowFailureDisplay) show details.
+    // The rideStatusMessage can be more generic or reflect the failure if not handled by errorMessage.
+    if (!errorMessage) { // Avoid overriding a more specific error message
+        rideStatusMessage = "Ride attempt failed. Please check details below.";
+    } else {
+        rideStatusMessage = ""; // Let ErrorMessageDisplay handle it
+    }
+  } else if (internalWorkflowId && !isRideActiveState && !showSummary) {
+    // Covers states like INITIALIZING, BLOCKED, or a loaded non-active, non-ended, non-failed ride
+     if (rideStateData?.status?.phase === 'INITIALIZING') {
+        rideStatusMessage = "Initializing ride...";
+    } else if (rideStateData?.status?.phase === 'BLOCKED') {
+        rideStatusMessage = "Ride blocked. Check for messages.";
+    } else if (storeTokens > 0) { // Previously loaded ride that was ended (and summary dismissed)
+        rideStatusMessage = "Previous ride loaded. Unlock scooter to start a new ride.";
+    }
+    // If no specific message, the default "Enter email..." will show if no internalWorkflowId
+  }
+  
+  if (errorMessage) { // errorMessage takes precedence for the status message area if set
+    rideStatusMessage = ""; 
   }
 
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
@@ -407,7 +410,7 @@ export const useRideOrchestrator = (
     scooterId, setScooterId, scooterIdError, setScooterIdError,
     isRideActive: isRideActiveState,
     rideStateData,
-    isLoadingRideState: isLoadingRideState || (startMutation.isPending && !internalWorkflowId), // Adjusted loading state
+    isLoadingRideState: isLoadingRideState || (startMutation.isPending && !internalWorkflowId), 
     showSummary,
     errorMessage,
     rideStatusMessage,
@@ -415,8 +418,8 @@ export const useRideOrchestrator = (
     storeElapsed, 
     storeTokens,
     internalWorkflowId,
-    startMutation, // Expose for pending states
-    endMutation,   // Expose for pending states
+    startMutation, 
+    endMutation,   
     handleStartRide,
     handleEndRide,
     dismissSummaryAndReset,
