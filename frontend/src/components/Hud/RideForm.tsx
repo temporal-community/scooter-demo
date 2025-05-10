@@ -126,7 +126,7 @@ export const RideForm: React.FC<RideFormProps> = ({
       </div>
 
       <button
-        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+        className="w-full bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors font-semibold py-3 px-4 shadow-none disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed focus:outline-none"
         onClick={onStartRide}
         disabled={isRideActive || isStarting}
       >

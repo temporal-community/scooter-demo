@@ -24,7 +24,13 @@ function RidePageLayout() {
 export default function App() {
   return (
     <div className="flex flex-col h-screen bg-slate-100">
-      <header className="text-center py-2 font-semibold">🛴 Scooter Demo</header>
+      <header className="flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🛴</span>
+          <span className="text-2xl font-bold text-gray-800 tracking-tight">Scooter Demo</span>
+        </div>
+        <div className="w-full mt-2 border-t border-gray-100" />
+      </header>
       <main className="flex-1 flex"> {/* Ensure main can fill space for routed content */}
         <Routes>
           {/* Route for when a workflowId is in the URL */}

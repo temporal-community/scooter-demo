@@ -76,8 +76,7 @@ export const RideSummaryDisplay: React.FC<RideSummaryDisplayProps> = ({
       )}
       <button
         onClick={onDismissSummary}
-        className="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md transition-colors text-sm font-medium shadow-sm disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-      >
+        className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium shadow-none disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed">
         Dismiss Summary
       </button>
     </div>
