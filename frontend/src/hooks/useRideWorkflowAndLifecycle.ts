@@ -194,6 +194,11 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       const canAnimate = isActiveFromServer && !isInitializing && serverPhase !== 'BLOCKED';
       storeSetIsAnimating(canAnimate);
 
+      // Clear lingering error if ride is now active
+      if (isActiveFromServer && errorMessage) {
+        setErrorMessageState(null);
+      }
+
       if (isActiveFromServer && rideStateData.status.startedAt) {
         const serverStartTimeMs = new Date(rideStateData.status.startedAt).getTime();
         if (rideStartTime !== serverStartTimeMs) setRideStartTime(serverStartTimeMs);
@@ -224,9 +229,6 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
 
       storeSetTokens(rideStateData.status.tokens?.total || 0);
 
-      if (!isInitializing && errorMessage && errorMessage.includes('Ride initialization is taking too long')) {
-        setErrorMessageState(null);
-      }
     } else {
       logTs(`[WL&L rideStateData] No rideStateData or no rideStateData.status. internalWorkflowId: ${internalWorkflowId}`);
     }

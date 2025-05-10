@@ -7,7 +7,7 @@ import { ACTIVE_PHASES } from './rideOrchestrator.types';
  * @returns True if the phase is an active phase, false otherwise.
  */
 export const isActivePhase = (phase: string): phase is ActivePhase => {
-  return ACTIVE_PHASES.includes(phase as ActivePhase);
+  return phase === 'ACTIVE';
 };
 
 /**
