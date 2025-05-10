@@ -82,9 +82,9 @@ export const RideForm: React.FC<RideFormProps> = ({
             id="scooterId"
             type="text"
             placeholder="e.g. 5555"
-            className={`input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800 ${
+            className={`input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-800 ${
               scooterIdError ? 'border-red-500' : ''
-            }`}
+            } ${scooterId.includes('9') ? 'bg-red-50' : scooterId === '1234' ? 'bg-yellow-100' : 'bg-white'}`}
             value={scooterId}
             onChange={(e) => {
               setScooterId(e.target.value);
@@ -96,6 +96,9 @@ export const RideForm: React.FC<RideFormProps> = ({
         </div>
         {scooterIdError && (
           <p className="text-red-500 text-sm mt-1">{scooterIdError}</p>
+        )}
+        {scooterId === '1234' && (
+          <p className="text-yellow-700 bg-yellow-50 rounded px-2 py-1 text-sm mt-1">This scooter ID will simulate a network outage</p>
         )}
       </div>
 
