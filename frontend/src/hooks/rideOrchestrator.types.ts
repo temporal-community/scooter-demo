@@ -9,11 +9,18 @@ export type ActivePhase = typeof ACTIVE_PHASES[number];
  * This should align with your actual API response structure.
  */
 export interface RideStateStatus {
-  phase: string; // e.g., 'INITIALIZING', 'ACTIVE', 'BLOCKED', 'ENDED', 'FAILED'
-  startedAt?: string; // ISO date string
-  endedAt?: string; // ISO date string
-  tokens?: { total: number };
-  lastError?: string | null;
+  phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED' | 'BLOCKED';
+  startedAt: string;
+  lastMeterAt: string;
+  endedAt?: string;
+  distanceFt: number;
+  tokens: {
+    unlock: number;
+    time: number;
+    distance: number;
+    total: number;
+  };
+  lastError?: string;
 }
 
 /**
@@ -21,6 +28,12 @@ export interface RideStateStatus {
  * This should align with your actual API response structure.
  */
 export interface RideStateResponse {
-  workflowId: string;
+  scooterId: string;
+  emailAddress: string;
+  customerId: string;
+  meterName: string;
+  rideTimeoutSecs: number;
+  pricePerThousand: number;
+  currency: string;
   status: RideStateStatus;
 }

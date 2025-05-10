@@ -8,7 +8,7 @@ import type { NavigateFunction } from 'react-router-dom';
 import { logTs } from './rideOrchestrator.utils';
 import { useRideInputs } from './useRideInputs';
 import { useRideWorkflowAndLifecycle } from './useRideWorkflowAndLifecycle';
-import type { RideStateResponse } from './rideOrchestrator.types'; // Assuming this is needed for rideStateData typing
+import type { RideStateResponse } from '../api/rideApi'; // Changed to use the API type
 
 export const useRideOrchestrator = (
   workflowIdFromUrl?: string | null,

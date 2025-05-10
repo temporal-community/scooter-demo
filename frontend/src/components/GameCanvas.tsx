@@ -131,11 +131,11 @@ class RideScene extends Phaser.Scene {
           font: '24px Helvetica',
           color: '#ffffff', 
           backgroundColor: '#000000aa',
-          padding: { x: 10, y: 5 },
+          padding: { x: 15, y: 10 },
           align: 'center',
           wordWrap: { width: 200 },  // Add word wrap with max width
           lineSpacing: 5,            // Add some spacing between lines
-          fixedWidth: 200,
+          fixedWidth: 250,
         }
       ).setOrigin(0.5).setDepth(100); // Ensure it's on top
     }

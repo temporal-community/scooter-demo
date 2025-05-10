@@ -1,5 +1,4 @@
 import type { ActivePhase } from './rideOrchestrator.types';
-import { ACTIVE_PHASES } from './rideOrchestrator.types';
 
 /**
  * Checks if a given phase string is one of the defined active phases.
