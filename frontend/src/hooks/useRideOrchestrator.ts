@@ -1,13 +1,14 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import { useRideStore } from '../stores/rideStore';
 import { useRideTimer } from './useRideTimer';
-import { useRideMutations } from './useRideMutations'; // Assuming this is the original
+import { useRideMutations } from './useRideMutations';
 import { useRideStatePoller } from './useRideStatePoller';
 import { fmtTime } from '../utils/timeUtils';
 import type { NavigateFunction } from 'react-router-dom';
 import { logTs } from './rideOrchestrator.utils';
 import { useRideInputs } from './useRideInputs';
 import { useRideWorkflowAndLifecycle } from './useRideWorkflowAndLifecycle';
+import type { RideStateResponse } from './rideOrchestrator.types'; // Assuming this is needed for rideStateData typing
 
 export const useRideOrchestrator = (
   workflowIdFromUrl?: string | null,
@@ -35,99 +36,77 @@ export const useRideOrchestrator = (
     resetInputs: resetInputFields,
   } = useRideInputs();
 
-  // 3. Refs used by mutation callbacks and effects
+  // 3. Refs
   const lastBucketRef = useRef(0);
-  const endingRef = useRef(false); // To track if endMutation is in progress via its own callback
+  const endingRef = useRef(false);
+  const unlockMessageTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref for the unlock success message timeout
 
-  // 4. Mutations Hook
-  //    internalWorkflowId for mutations will be taken from workflowApi.internalWorkflowId.
-  //    We need a state variable to pass to useRideMutations that updates when workflowApi.internalWorkflowId changes.
+  // 4. Local State for Orchestrator
   const [mutationWorkflowId, setMutationWorkflowId] = useState<string | null>(workflowIdFromUrl || storeWorkflowId);
+  const [pollerWorkflowId, setPollerWorkflowId] = useState<string | null>(workflowIdFromUrl || storeWorkflowId);
+  const [pollerEnabledState, setPollerEnabledState] = useState(false);
+  const [unlockSuccessMessageActive, setUnlockSuccessMessageActive] = useState(false); // State for the unlock success message
 
+  // 5. Mutations Hook
   const {
     startMutation,
     endMutation,
     addDistanceMutation
-  } = useRideMutations({ // This is the original useRideMutations hook
-    workflowId: mutationWorkflowId, // Pass the state variable
+  } = useRideMutations({
+    workflowId: mutationWorkflowId,
     validateEmailFn: validateEmailUtil,
     validateScooterIdFn: validateScooterIdUtil,
-    // Callbacks are defined below, using workflowApi setters
-    // For now, pass stubs or handle them outside if useRideMutations returns promises
-    // The original useRideMutations took callbacks directly. We will define them using workflowApi.
-    // This means workflowApi must be initialized before these callbacks are effectively used by useRideMutations.
-    // The simplest is to ensure workflowApi is initialized, then define these callbacks.
-    // For this refactor, we'll assume the callbacks are passed and useRideMutations handles them.
-    // The actual setters will come from workflowApi defined shortly.
-    // This part requires careful wiring: the callbacks passed to useRideMutations
-    // need to call methods on workflowApi.
     onStartSuccess: (dataResponse) => {
-        // This will be redefined later using workflowApi
-        logTs('[Orchestrator onStartSuccess] Placeholder. Actual logic will use workflowApi.', dataResponse);
+        logTs('[Orchestrator onStartSuccess] Placeholder. Actual logic handled in handleStartRide.', dataResponse);
     },
     onStartError: (error: Error) => {
-        logTs('[Orchestrator onStartError] Placeholder.', error);
+        logTs('[Orchestrator onStartError] Placeholder. Actual logic handled in handleStartRide.', error);
     },
     onEndMutate: () => {
-        logTs('[Orchestrator onEndMutate] Placeholder.');
-        endingRef.current = true; // Original logic
-        // setIsRideActiveState(false) & storeSetIsAnimating(false) will be workflowApi calls
+        logTs('[Orchestrator onEndMutate] Placeholder. Actual logic handled in handleEndRide.');
+        endingRef.current = true;
     },
     onEndSuccess: () => {
-        logTs('[Orchestrator onEndSuccess] Placeholder.');
-        endingRef.current = false; // Original logic
+        logTs('[Orchestrator onEndSuccess] Placeholder. Actual logic handled in handleEndRide.');
+        endingRef.current = false;
     },
     onEndError: (error: Error) => {
-        logTs('[Orchestrator onEndError] Placeholder.', error);
-        endingRef.current = false; // Original logic
+        logTs('[Orchestrator onEndError] Placeholder. Actual logic handled in handleEndRide.', error);
+        endingRef.current = false;
     },
     onAddDistanceError: (error: Error) => {
-        logTs('[Orchestrator onAddDistanceError] Placeholder.', error);
+        logTs('[Orchestrator onAddDistanceError] Placeholder. Actual logic handled in distance effect.', error);
     },
   });
 
-
-  // 5. Poller Hook
-  //    internalWorkflowId for poller, and its enabled state, will also come from workflowApi.
-  const [pollerWorkflowId, setPollerWorkflowId] = useState<string | null>(workflowIdFromUrl || storeWorkflowId);
-  const [pollerEnabledState, setPollerEnabledState] = useState(false);
+  // 6. Poller Hook
   const {
-    data: rideStateData, // This is the polled data
+    data: rideStateData, // This is RideStateResponse from api/rideApi (or similar)
     isLoading: isLoadingRideState,
     refetch: refetchRideState
   } = useRideStatePoller(pollerWorkflowId, pollerEnabledState);
 
   // Prepare rideStateData for useRideWorkflowAndLifecycle
-  // It expects RideStateResponse from './rideOrchestrator.types' which includes workflowId
-  const rideStateDataForWorkflow = useMemo(() => {
+  const rideStateDataForWorkflow: RideStateResponse | null | undefined = useMemo(() => {
     if (rideStateData && pollerWorkflowId) {
       return {
-        ...rideStateData, // Spread the polled data (from api/rideApi)
-        workflowId: pollerWorkflowId, // Add the workflowId known to the poller
+        ...(rideStateData as any), 
+        workflowId: pollerWorkflowId,
       };
     }
-    // Ensure the return type matches RideStateResponse | null | undefined
-    // If rideStateData is undefined, or pollerWorkflowId is null, return undefined (or null)
-    // to match the expected type for useRideWorkflowAndLifecycle.
-    // Given rideStateData is `RideStateResponse | undefined` and pollerWorkflowId is `string | null`,
-    // this condition correctly handles cases where either is not set.
     return undefined;
   }, [rideStateData, pollerWorkflowId]);
 
 
-  // 6. Workflow and Lifecycle Hook
+  // 7. Workflow and Lifecycle Hook
   const workflowApi = useRideWorkflowAndLifecycle({
     workflowIdFromUrl,
     navigate,
-    // Store access
     storeWorkflowId, storeSetWorkflowId, storeReset,
     storeSetTokens, storeSetElapsed, storeSetMovementDisabledMessage, storeSetIsAnimating,
-    // From poller
-    rideStateData: rideStateDataForWorkflow, // Pass the transformed data
-    refetchRideState, // Pass the refetch function
-    // From mutations
+    rideStateData: rideStateDataForWorkflow,
+    refetchRideState,
     isStartMutationPending: startMutation.isPending,
-    // For resetting inputs
     resetInputFields,
   });
 
@@ -144,29 +123,10 @@ export const useRideOrchestrator = (
       (!startMutation.isPending && !endMutation.isPending && !workflowApi.showSummary)
     );
     setPollerEnabledState(enabled);
-    logTs(`[Orchestrator pollerEnabled effect] Poller enabled: ${enabled}`);
+    logTs(`[Orchestrator pollerEnabled effect] Poller enabled: ${enabled}, internalWorkflowId: ${workflowApi.internalWorkflowId}, isRideActiveState: ${workflowApi.isRideActiveState}, startPending: ${startMutation.isPending}, endPending: ${endMutation.isPending}, showSummary: ${workflowApi.showSummary}`);
   }, [workflowApi.internalWorkflowId, workflowApi.isRideActiveState, startMutation.isPending, endMutation.isPending, workflowApi.showSummary]);
 
-
-  // Define actual mutation callbacks using workflowApi
-  // Note: This redefines the callbacks for useRideMutations.
-  // Ideally, useRideMutations would be structured to accept these dynamically or return promises.
-  // For this refactor, we assume that if useRideMutations is called again with new callbacks, it uses them.
-  // Or, more simply, the onStartSuccess etc. props of useRideMutations are themselves functions that close over workflowApi.
-  // The original hook defines these callbacks inline, so they have access to the hook's scope.
-  // We need to ensure these callbacks, when invoked by useRideMutations, correctly call workflowApi methods.
-
-  // This part is tricky. If useRideMutations is a black box that takes callbacks only on init,
-  // then those initial (placeholder) callbacks won't have workflowApi.
-  // A common pattern is for mutation hooks to return promise-based functions.
-  // Let's assume `startMutation.mutateAsync()` returns a promise and we handle success/error here.
-  // If `useRideMutations` strictly uses its `onStartSuccess` prop, then that prop needs to be a stable function
-  // that internally accesses the latest `workflowApi` (e.g., via a ref or by being part of a re-memoized options object).
-
-  // For simplicity, let's define handlers that call mutateAsync and then use workflowApi.
-  // This bypasses the onXXX props of useRideMutations if they are not designed for this.
-
-  // 7. Ride Timer
+  // 8. Ride Timer
   const localElapsedSeconds = useRideTimer(workflowApi.isRideActiveState, workflowApi.rideStartTime);
 
   // Effect to update the elapsed time in the Zustand store
@@ -174,12 +134,11 @@ export const useRideOrchestrator = (
     storeSetElapsed(fmtTime(localElapsedSeconds));
   }, [localElapsedSeconds, storeSetElapsed]);
 
-
-  // 8. Action Handlers (replaces direct use of mutation hook's onXXX callbacks)
+  // 9. Action Handlers
   const handleStartRide = useCallback(async () => {
     logTs(`[Orchestrator handleStartRide] Called. Email: ${email}, ScooterID: ${scooterId}`);
-    const emailVal = validateEmailUtil(email);
-    const scooterIdVal = validateScooterIdUtil(scooterId);
+    const emailVal = validateEmailUtil(email); // Client-side validation
+    const scooterIdVal = validateScooterIdUtil(scooterId); // Client-side validation
 
     setEmailError(emailVal.error || '');
     setScooterIdError(scooterIdVal.error || '');
@@ -188,62 +147,82 @@ export const useRideOrchestrator = (
       logTs(`[Orchestrator handleStartRide] Inputs valid. Calling startMutation.`);
       const pricePerThousand = 25;
       const currency = "USD";
-      workflowApi.setErrorMessage(null); // From workflowApi
-      workflowApi.setIsRequestTimedOut(false); // From workflowApi
+      workflowApi.setErrorMessage(null);
+      workflowApi.setIsRequestTimedOut(false);
+
+      if (unlockMessageTimeoutRef.current) {
+        clearTimeout(unlockMessageTimeoutRef.current);
+      }
+
       try {
         const dataResponse = await startMutation.mutateAsync({ emailAddress: email, scooterId, pricePerThousand, currency });
-        // Original onStartSuccess logic:
         logTs('[Orchestrator handleStartRide] Start success.', dataResponse);
+        
+        setUnlockSuccessMessageActive(true);
+        unlockMessageTimeoutRef.current = setTimeout(() => {
+          setUnlockSuccessMessageActive(false);
+          unlockMessageTimeoutRef.current = null;
+        }, 3000);
+
         storeReset();
         lastBucketRef.current = 0;
-        const startTimeFromServer = dataResponse.startedAt ?? Date.now();
+        const startTimeFromServer = dataResponse.startedAt ? new Date(dataResponse.startedAt).getTime() : Date.now();
         workflowApi.setRideStartTime(startTimeFromServer);
         workflowApi.setIsRideActiveState(true);
-        storeSetIsAnimating(true); // Directly from store
-        storeSetMovementDisabledMessage(null); // Directly from store
+        storeSetIsAnimating(true);
+        storeSetMovementDisabledMessage(null);
         workflowApi.setShowSummary(false);
-        workflowApi.setInternalWorkflowId(dataResponse.workflowId); // Update workflow via API
-        storeSetWorkflowId(dataResponse.workflowId); // Sync store
+        workflowApi.setInternalWorkflowId(dataResponse.workflowId);
+        storeSetWorkflowId(dataResponse.workflowId);
         if (navigate) {
           navigate(`/ride/${dataResponse.workflowId}`, { replace: true });
         }
       } catch (error: any) {
-        // Original onStartError logic:
         logTs('[Orchestrator handleStartRide] Start error.', error);
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          workflowApi.showTemporaryError('Unable to connect to the server. Please check if the API is running.');
+        let finalErrorMessageToShow: string;
+
+        // Check for the specific "Activity task failed" message to override it
+        if (error.message?.includes('Activity task failed')) {
+          finalErrorMessageToShow = 'The email address provided is invalid or could not be processed. Please check and try again.';
+        } else if (error.message?.includes('Failed to fetch') || error.message?.includes('NetworkError')) {
+          finalErrorMessageToShow = 'Unable to connect to the server. Please check if the API is running.';
         } else {
-          workflowApi.showTemporaryError(error.message || 'Failed to start ride');
+          finalErrorMessageToShow = error.message || 'Failed to start ride. Please try again.';
         }
+
+        workflowApi.showTemporaryError(finalErrorMessageToShow);
+        
         storeSetIsAnimating(false);
-        storeSetMovementDisabledMessage('Unable to start ride. Please try again.');
+        storeSetMovementDisabledMessage('Unable to start ride. Please try again.'); // This message is for movement restriction
         workflowApi.setShowSummary(false);
+        setUnlockSuccessMessageActive(false); 
+        if (unlockMessageTimeoutRef.current) {
+            clearTimeout(unlockMessageTimeoutRef.current);
+            unlockMessageTimeoutRef.current = null;
+        }
       }
     }
   }, [
     email, scooterId, startMutation, validateEmailUtil, validateScooterIdUtil, setEmailError, setScooterIdError,
-    workflowApi, storeReset, storeSetIsAnimating, storeSetMovementDisabledMessage, storeSetWorkflowId, navigate
+    workflowApi, storeReset, storeSetIsAnimating, storeSetMovementDisabledMessage, storeSetWorkflowId, navigate,
+    // No need to add setUnlockSuccessMessageActive to deps for useCallback itself, it's a local setter
   ]);
 
   const handleEndRide = useCallback(async () => {
     logTs(`[Orchestrator handleEndRide] Called. internalWorkflowId: ${workflowApi.internalWorkflowId}`);
     if (workflowApi.internalWorkflowId) {
-      // Original onEndMutate logic
       endingRef.current = true;
       workflowApi.setIsRideActiveState(false);
       storeSetIsAnimating(false);
       try {
         await endMutation.mutateAsync();
-        // Original onEndSuccess logic
         logTs('[Orchestrator handleEndRide] End success for workflow:', workflowApi.internalWorkflowId);
         endingRef.current = false;
-        // Ride summary is shown by poller detecting 'ENDED' phase via workflowApi's effect
       } catch (error: any) {
-        // Original onEndError logic
         logTs('[Orchestrator handleEndRide] End error.', error);
         endingRef.current = false;
         workflowApi.showTemporaryError(error.message || 'Failed to end ride');
-        workflowApi.setShowSummary(false); // Ensure summary isn't shown on error
+        workflowApi.setShowSummary(false);
       }
     } else {
       workflowApi.showTemporaryError('No active ride to end.');
@@ -263,7 +242,7 @@ export const useRideOrchestrator = (
     if (currentBucket > previousBucket) {
       logTs(`[Orchestrator addDistance] Mutating for buckets ${previousBucket + 1} to ${currentBucket}.`);
       for (let i = previousBucket + 1; i <= currentBucket; i++) {
-        addDistanceMutation.mutate(undefined, { // Pass undefined if no args, add error handling if needed
+        addDistanceMutation.mutate(undefined, {
             onError: (error: any) => {
                  logTs('[Orchestrator addDistance] Failed to add distance.', error);
                  workflowApi.showTemporaryError(error.message || 'Failed to add distance');
@@ -272,59 +251,68 @@ export const useRideOrchestrator = (
       }
       lastBucketRef.current = currentBucket;
     }
-  }, [storeDistance, workflowApi.isRideActiveState, workflowApi.internalWorkflowId, addDistanceMutation, workflowApi.showTemporaryError]);
+  }, [storeDistance, workflowApi.isRideActiveState, workflowApi.internalWorkflowId, addDistanceMutation, workflowApi]);
 
-  // 9. Deriving a user-friendly ride status message
+  // 10. Deriving a user-friendly ride status message
   const rideStatusMessage = useMemo(() => {
     let msg = "Enter your email and unlock the scooter to start your ride.";
-    if (workflowApi.errorMessage) {
-      msg = "";
+    if (workflowApi.errorMessage) { 
+      msg = ""; 
+    } else if (unlockSuccessMessageActive) { 
+      msg = "Scooter Unlocked! Get ready to ride.";
     } else if (startMutation.isPending) {
       msg = "Unlocking scooter...";
-    } else if (endMutation.isPending || endingRef.current) { // Use endingRef for immediate feedback
+    } else if (endMutation.isPending || endingRef.current) {
       msg = "Ending ride...";
     } else if (isLoadingRideState && !!workflowApi.internalWorkflowId && !workflowApi.isRideActiveState && !workflowApi.showSummary) {
       msg = `Loading ride state for ${workflowApi.internalWorkflowId}...`;
     } else if (workflowApi.isRideActiveState) {
-      const currentPhase = rideStateData?.status?.phase;
+      const currentPhase = rideStateDataForWorkflow?.status?.phase; 
       if (currentPhase === 'INITIALIZING') {
           msg = "Initializing ride...";
       } else if (currentPhase === 'BLOCKED') {
-          msg = "Ride blocked. Check for messages.";
+          msg = "Ride blocked. Check for messages."; 
       } else {
           msg = "Ride in progress. Use the right arrow key on your keyboard to move.";
       }
     } else if (workflowApi.showSummary) {
-      if (rideStateData?.status?.phase === 'ENDED') {
+      if (rideStateDataForWorkflow?.status?.phase === 'ENDED') { 
         msg = "Ride ended.";
       } else if (workflowApi.internalWorkflowId) {
         msg = `Loading summary for ${workflowApi.internalWorkflowId}...`;
       } else {
-        msg = "Summary displayed.";
+        msg = "Summary displayed."; 
       }
-    } else if (rideStateData?.status?.phase === 'FAILED') {
-      if (!workflowApi.errorMessage) {
+    } else if (rideStateDataForWorkflow?.status?.phase === 'FAILED') { 
+      if (!workflowApi.errorMessage) { 
         msg = "Ride attempt failed. Please check details below.";
       } else {
-        msg = "";
+        msg = ""; 
       }
     } else if (workflowApi.internalWorkflowId && !workflowApi.isRideActiveState && !workflowApi.showSummary) {
-      if (storeTokens > 0) {
+      if (storeTokens > 0) { 
         msg = "Previous ride loaded. Unlock scooter to start a new ride.";
+      } else {
+        msg = `Ride ${workflowApi.internalWorkflowId} loaded. Ready to start or resume.`;
       }
     }
     return msg;
   }, [
       workflowApi.errorMessage, workflowApi.internalWorkflowId, workflowApi.isRideActiveState, workflowApi.showSummary,
-      startMutation.isPending, endMutation.isPending, isLoadingRideState, rideStateData, storeTokens
+      unlockSuccessMessageActive, 
+      startMutation.isPending, endMutation.isPending, isLoadingRideState,
+      rideStateDataForWorkflow, 
+      storeTokens
   ]);
 
-  // 10. Effect for cleanup on component unmount (Main orchestrator specific, if any)
+  // 11. Effect for cleanup on component unmount
   useEffect(() => {
     logTs(`[Orchestrator Mount] Component/hook mounted.`);
     return () => {
       logTs(`[Orchestrator Unmount] Unmounting.`);
-      // Cleanup for this hook itself, sub-hooks handle their own internal timeouts.
+      if (unlockMessageTimeoutRef.current) {
+        clearTimeout(unlockMessageTimeoutRef.current); 
+      }
     };
   }, []);
 
@@ -332,7 +320,7 @@ export const useRideOrchestrator = (
     email, setEmail, emailError, setEmailError,
     scooterId, setScooterId, scooterIdError, setScooterIdError,
     isRideActive: workflowApi.isRideActiveState,
-    rideStateData, // From poller
+    rideStateData: rideStateDataForWorkflow, 
     isLoadingRideState: isLoadingRideState || (startMutation.isPending && !workflowApi.internalWorkflowId),
     showSummary: workflowApi.showSummary,
     errorMessage: workflowApi.errorMessage,
@@ -341,7 +329,7 @@ export const useRideOrchestrator = (
     storeElapsed,
     storeTokens,
     internalWorkflowId: workflowApi.internalWorkflowId,
-    startMutation, // Expose the mutation objects
+    startMutation,
     endMutation,
     handleStartRide,
     handleEndRide,

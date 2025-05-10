@@ -59,9 +59,7 @@ export const WorkflowFailureDisplay: React.FC<WorkflowFailureDisplayProps> = ({
         <p className="text-center text-red-700">
           {rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND'
             ? 'We couldn\'t find an account with that email address.'
-            : rideStateData.status.lastError // Display specific error from API if available
-            ? `There was a problem starting your ride: ${rideStateData.status.lastError.replace(/_/g, ' ').toLowerCase()}`
-            : 'There was a problem starting your ride. Please check the details and try again.'}
+            : 'We couldn\'t find an account with that email address.'}
         </p>
         
         <div className="space-y-1">

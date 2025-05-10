@@ -50,15 +50,15 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
   const [isRideActiveState, setIsRideActiveState] = useState(false);
   const [rideStartTime, setRideStartTime] = useState<number | null>(null);
   const [showSummary, setShowSummary] = useState(false);
-  const [errorMessage, setErrorMessageState] = useState<string | null>(null);
+  const [errorMessage, setErrorMessageState] = useState<string | null>(null); // General error message state
   const [isRequestTimedOut, setIsRequestTimedOut] = useState(false);
   const [initializingStartTime, setInitializingStartTime] = useState<number | null>(null);
   const INITIALIZING_TIMEOUT_MS = 3000; // 3 seconds
   const INITIALIZING_CHECK_INTERVAL_MS = 500; // Interval for checking the initialization timeout
-  const errorTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined); // Timeout for clearing error messages
+  const errorTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined); // Timeout for clearing general error messages
 
   /**
-   * Stable setter for the error message.
+   * Stable setter for the general error message.
    */
   const setErrorMessage = useCallback((message: string | null) => {
     setErrorMessageState(message);
@@ -83,7 +83,7 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       if (workflowIdFromUrl !== internalWorkflowId) {
         logTs(`[WL&L workflowIdFromUrl] URL has workflowId ${workflowIdFromUrl}, current internal is ${internalWorkflowId}. Resetting and loading from URL.`);
         storeReset();
-        setInternalWorkflowId(workflowIdFromUrl); // Use stable setter
+        setInternalWorkflowId(workflowIdFromUrl); 
         storeSetWorkflowId(workflowIdFromUrl);
         refetchRideState();
         if (justDismissedFlagRef.current) {
@@ -93,11 +93,11 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
           logTs(`[WL&L workflowIdFromUrl] Cleared dismissal flags.`);
         }
       }
-    } else { // No workflowId in URL
+    } else { 
       if (internalWorkflowId && !justDismissedFlagRef.current && !isStartMutationPending) {
         logTs(`[WL&L workflowIdFromUrl] URL cleared, internalWorkflowId (${internalWorkflowId}) was set. Conditions met for reset (not pending start). Resetting internal state.`);
         storeReset();
-        setInternalWorkflowId(null); // Use stable setter
+        setInternalWorkflowId(null); 
         storeSetWorkflowId(null);
       } else {
         logTs(`[WL&L workflowIdFromUrl] URL cleared, but conditions for reset not met. internalWorkflowId: ${internalWorkflowId}, justDismissed: ${justDismissedFlagRef.current}, startPending: ${isStartMutationPending}`);
@@ -111,31 +111,31 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
     logTs(`[WL&L storeWorkflowId] START. storeWorkflowId: ${storeWorkflowId}, internalWorkflowId: ${internalWorkflowId}`);
     if (storeWorkflowId && storeWorkflowId !== internalWorkflowId) {
       logTs(`[WL&L storeWorkflowId] storeWorkflowId (${storeWorkflowId}) changed and differs from internal (${internalWorkflowId}). Syncing internal.`);
-      setInternalWorkflowId(storeWorkflowId); // Use stable setter
+      setInternalWorkflowId(storeWorkflowId); 
     } else if (!storeWorkflowId && internalWorkflowId && !isStartMutationPending) {
       logTs(`[WL&L storeWorkflowId] storeWorkflowId cleared, but internalWorkflowId (${internalWorkflowId}) was set and not pending start. Resetting.`);
       storeReset();
-      setInternalWorkflowId(null); // Use stable setter
+      setInternalWorkflowId(null); 
     }
     logTs(`[WL&L storeWorkflowId] END.`);
   }, [storeWorkflowId, internalWorkflowId, storeReset, setInternalWorkflowId, isStartMutationPending]);
 
   /**
-   * Shows a temporary error message.
+   * Shows a temporary general error message.
    */
   const showTemporaryError = useCallback((message: string) => {
     logTs(`[WL&L showTemporaryError] Called. Current errorMessage: "${errorMessage}". New message: "${message}"`);
-    setErrorMessageState(message);
+    setErrorMessageState(message); // Sets the general errorMessage
     if (errorTimeoutRef.current) {
       clearTimeout(errorTimeoutRef.current);
     }
     const isInitializing = rideStateData?.status?.phase === 'INITIALIZING';
-    if (!isInitializing) {
+    if (!isInitializing) { // Don't auto-clear if it's an initializing timeout message
       errorTimeoutRef.current = setTimeout(() => {
         setErrorMessageState(null);
       }, 5000);
     }
-  }, [rideStateData?.status?.phase, errorMessage]); // Keep errorMessage in deps for logging current value
+  }, [rideStateData?.status?.phase, errorMessage]); 
 
   // Effect to reset ride-specific timers and flags when internalWorkflowId changes
   useEffect(() => {
@@ -143,16 +143,19 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
     setRideStartTime(null);
     setInitializingStartTime(null);
     setIsRequestTimedOut(false);
-    setErrorMessageState(null);
-    if (errorTimeoutRef.current) {
+    // Do not clear errorMessage here automatically on internalWorkflowId change,
+    // as it might have been set by a mutation error before workflowId is established.
+    // It will be cleared by its own timeout or specific conditions (e.g. ride becoming active or reset).
+    if (errorTimeoutRef.current) { // Clear timeout for general error if workflow changes
       clearTimeout(errorTimeoutRef.current);
       errorTimeoutRef.current = undefined;
     }
-    if (!internalWorkflowId) {
+    if (!internalWorkflowId) { // If workflowId is explicitly nulled (e.g. on reset/dismiss)
       setIsRideActiveState(false);
       setShowSummary(false);
+      setErrorMessageState(null); // Clear general error message
     }
-    logTs(`[WL&L internalWorkflowId change] END. rideStartTime: null, initializingStartTime: null, isRequestTimedOut: false, errorMessage: null.`);
+    logTs(`[WL&L internalWorkflowId change] END. rideStartTime: null, initializingStartTime: null, isRequestTimedOut: false.`);
   }, [internalWorkflowId]);
 
   // Main effect to process data from the poller (rideStateData)
@@ -167,7 +170,8 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
 
     if (rideStateData && rideStateData.status) {
       const serverPhase = rideStateData.status.phase;
-      logTs(`[WL&L rideStateData] Processing rideStateData. ServerPhase: ${serverPhase}`);
+      const lastErrorFromApi = rideStateData.status.lastError; // Capture lastError from API
+      logTs(`[WL&L rideStateData] Processing rideStateData. ServerPhase: ${serverPhase}, LastError: ${lastErrorFromApi}`);
 
       const isActiveFromServer = isActivePhase(serverPhase);
       const isInitializing = serverPhase === 'INITIALIZING';
@@ -178,25 +182,39 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
         setInitializingStartTime(Date.now());
       } else if (!isInitializing && initializingStartTime) {
         setInitializingStartTime(null);
-        if (!isFailed && isRequestTimedOut) {
+        if (!isFailed && isRequestTimedOut) { // Reset timedOut flag if no longer initializing and not failed
           setIsRequestTimedOut(false);
         }
       }
       
       if (isRideActiveState !== isActiveFromServer) setIsRideActiveState(isActiveFromServer);
 
+      // --- MODIFIED SECTION for storeSetMovementDisabledMessage ---
       if (serverPhase === 'BLOCKED') {
         storeSetMovementDisabledMessage('Approve ride signal required to continue');
+      } else if (isFailed) {
+        // If the phase is FAILED, check for the specific "Activity task failed" error
+        if (lastErrorFromApi?.toLowerCase().includes('activity task failed')) {
+          storeSetMovementDisabledMessage('The email address provided is invalid or could not be processed. Please check and try again.');
+          logTs('[WL&L rideStateData] FAILED state with "Activity task failed" from API. Setting custom movement disabled message.');
+        } else {
+          // For other FAILED reasons, use the API's lastError or a more generic failure message
+          storeSetMovementDisabledMessage(lastErrorFromApi || 'Ride failed. Please try again.');
+        }
       } else {
-        storeSetMovementDisabledMessage(rideStateData.status.lastError || null);
+        // For all other phases (ACTIVE, INITIALIZING, ENDED, etc.)
+        // If there's a lastError from the API, display it. Otherwise, clear the movement message.
+        storeSetMovementDisabledMessage(lastErrorFromApi || null);
       }
+      // --- END OF MODIFIED SECTION ---
 
       const canAnimate = isActiveFromServer && !isInitializing && serverPhase !== 'BLOCKED';
       storeSetIsAnimating(canAnimate);
 
-      // Clear lingering error if ride is now active
-      if (isActiveFromServer && errorMessage) {
+      // Clear lingering general errorMessage (from showTemporaryError) if ride is now active and not blocked
+      if (isActiveFromServer && serverPhase !== 'BLOCKED' && errorMessage) {
         setErrorMessageState(null);
+        if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
       }
 
       if (isActiveFromServer && rideStateData.status.startedAt) {
@@ -214,16 +232,18 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
         }
         storeSetElapsed(fmtTime(finalElapsedSeconds));
       } else if (isFailed) {
-        if (showSummary) setShowSummary(false);
-        if (isRequestTimedOut) setIsRequestTimedOut(false);
+        if (showSummary) setShowSummary(false); // Don't show summary if ride failed
+        if (isRequestTimedOut) setIsRequestTimedOut(false); // Reset timeout if it failed
         let finalElapsedSeconds = 0;
         if (rideStateData.status.startedAt && rideStateData.status.endedAt) {
              finalElapsedSeconds = calculateElapsedSeconds(rideStateData.status.startedAt, rideStateData.status.endedAt);
-        } else if (rideStateData.status.startedAt) {
+        } else if (rideStateData.status.startedAt) { // If it started but then failed
             finalElapsedSeconds = calculateElapsedSeconds(rideStateData.status.startedAt, undefined); // Current time if only startedAt
         }
         storeSetElapsed(fmtTime(finalElapsedSeconds));
-      } else {
+        // Note: The general errorMessage might have been set by handleStartRide's catch block in orchestrator.
+        // The storeMovementDisabledMessage is handled above for FAILED state.
+      } else { // For active, initializing, etc., not ended or failed
         if (showSummary) setShowSummary(false);
       }
 
@@ -232,12 +252,12 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
     } else {
       logTs(`[WL&L rideStateData] No rideStateData or no rideStateData.status. internalWorkflowId: ${internalWorkflowId}`);
     }
-    logTs(`[WL&L rideStateData] END. showSummary: ${showSummary}, isRideActiveState: ${isRideActiveState}`);
+    logTs(`[WL&L rideStateData] END. showSummary: ${showSummary}, isRideActiveState: ${isRideActiveState}, errorMessage: ${errorMessage}`);
   }, [
     internalWorkflowId, rideStateData,
     storeSetTokens, storeSetElapsed, storeSetMovementDisabledMessage, storeSetIsAnimating,
     rideStartTime, initializingStartTime, isRequestTimedOut, errorMessage, showSummary, isRideActiveState,
-    setRideStartTime, setIsRideActiveState, setShowSummary, setInitializingStartTime, setIsRequestTimedOut, setErrorMessageState, // Ensure all setters are stable or included
+    setRideStartTime, setIsRideActiveState, setShowSummary, setInitializingStartTime, setIsRequestTimedOut, setErrorMessageState, 
   ]);
 
   // Dedicated effect for INITIALIZING timeout check
@@ -247,14 +267,16 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
 
     if (currentPhaseIsInitializing && initializingStartTime && !isRequestTimedOut) {
       intervalId = setInterval(() => {
-        if (!isRequestTimedOut) {
+        // Check isRequestTimedOut again inside interval, as it might be set by another effect or callback
+        if (!isRequestTimedOut) { 
             const elapsedTime = Date.now() - initializingStartTime;
             if (elapsedTime > INITIALIZING_TIMEOUT_MS) {
+              // This uses showTemporaryError, which sets the general errorMessage state
               showTemporaryError('Ride initialization is taking a while.. please wait a moment.');
-              setIsRequestTimedOut(true);
+              setIsRequestTimedOut(true); // Mark that this specific timeout has occurred
               if (intervalId) clearInterval(intervalId);
             }
-        } else {
+        } else { // If already timed out, clear interval
              if (intervalId) clearInterval(intervalId);
         }
       }, INITIALIZING_CHECK_INTERVAL_MS);
@@ -280,10 +302,13 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       navigate('/', { replace: true });
     }
 
-    setInternalWorkflowId(null); // Use stable setter
+    setInternalWorkflowId(null); 
     storeSetWorkflowId(null);
     storeReset();
-    resetInputFields(); // Call the passed-in reset function
+    resetInputFields(); 
+    setErrorMessageState(null); // Clear general error message on reset
+    if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current); // Clear its timeout as well
+    
     logTs(`[WL&L dismissSummaryAndReset] State reset. Setting dismiss timeout.`);
 
     dismissTimeoutRef.current = setTimeout(() => {
@@ -305,6 +330,7 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       if (dismissTimeoutRef.current) {
         clearTimeout(dismissTimeoutRef.current);
       }
+      // No need to clear initializing timeout here, its own effect handles it.
     };
   }, []);
 
@@ -314,16 +340,16 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
     isRideActiveState,
     rideStartTime,
     showSummary,
-    errorMessage, // The state value
+    errorMessage, // The general error message state (set by showTemporaryError)
     isRequestTimedOut,
     // Setters / Actions
-    setInternalWorkflowId, // Exposed for direct setting, e.g., on start ride success
+    setInternalWorkflowId, 
     setIsRideActiveState,
     setRideStartTime,
     setShowSummary,
-    setErrorMessage, // The stable setter
+    setErrorMessage, // The stable setter for the general errorMessage state
     setIsRequestTimedOut,
-    showTemporaryError,
+    showTemporaryError, // The function to call to show a temporary general error
     dismissSummaryAndReset,
   };
 };
