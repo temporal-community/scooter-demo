@@ -189,8 +189,9 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       
       if (isRideActiveState !== isActiveFromServer) setIsRideActiveState(isActiveFromServer);
 
-      // --- MODIFIED SECTION for storeSetMovementDisabledMessage ---
-      if (serverPhase === 'BLOCKED') {
+      if (isInitializing) {
+        storeSetMovementDisabledMessage('Starting your ride...');
+      } else if (serverPhase === 'BLOCKED') {
         storeSetMovementDisabledMessage('Approve ride signal required to continue');
       } else if (isFailed) {
         // If the phase is FAILED, check for the specific "Activity task failed" error
@@ -201,12 +202,13 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
           // For other FAILED reasons, use the API's lastError or a more generic failure message
           storeSetMovementDisabledMessage(lastErrorFromApi || 'Ride failed. Please try again.');
         }
+      } else if (isEnded) {
+        storeSetMovementDisabledMessage('Ride ended. Unlock to start a new session.');
       } else {
-        // For all other phases (ACTIVE, INITIALIZING, ENDED, etc.)
+        // For all other phases (ACTIVE, etc.)
         // If there's a lastError from the API, display it. Otherwise, clear the movement message.
         storeSetMovementDisabledMessage(lastErrorFromApi || null);
       }
-      // --- END OF MODIFIED SECTION ---
 
       const canAnimate = isActiveFromServer && !isInitializing && serverPhase !== 'BLOCKED';
       storeSetIsAnimating(canAnimate);
