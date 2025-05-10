@@ -38,7 +38,8 @@ export default function Hud({ workflowIdFromUrl, navigate }: HudProps) {
     handleEndRide,
     dismissSummaryAndReset, // Needed for RideSummaryDisplay
     validateEmailUtil,      // Needed for RideForm and WorkflowFailureDisplay
-    validateScooterIdUtil   // Needed for RideForm
+    validateScooterIdUtil,  // Needed for RideForm
+    isStarting,            // Added for RideForm
   } = useRideOrchestrator(workflowIdFromUrl, navigate);
 
   return (
@@ -86,7 +87,7 @@ export default function Hud({ workflowIdFromUrl, navigate }: HudProps) {
         setScooterIdError={setScooterIdError}
         onStartRide={handleStartRide}
         isRideActive={isRideActive}
-        isStarting={startMutation.isPending}
+        isStarting={isStarting}
         showSummary={showSummary}
         validateEmail={validateEmailUtil}
         validateScooterId={validateScooterIdUtil}

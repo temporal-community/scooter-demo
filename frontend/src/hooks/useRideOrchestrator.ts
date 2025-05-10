@@ -46,6 +46,7 @@ export const useRideOrchestrator = (
   const [pollerWorkflowId, setPollerWorkflowId] = useState<string | null>(workflowIdFromUrl || storeWorkflowId);
   const [pollerEnabledState, setPollerEnabledState] = useState(false);
   const [unlockSuccessMessageActive, setUnlockSuccessMessageActive] = useState(false); // State for the unlock success message
+  const [isInitializing, setIsInitializing] = useState(false); // New state to track initialization phase
 
   // 5. Mutations Hook
   const {
@@ -305,6 +306,12 @@ export const useRideOrchestrator = (
       storeTokens
   ]);
 
+  // Effect to track initialization state
+  useEffect(() => {
+    const isInitializingPhase = rideStateDataForWorkflow?.status?.phase === 'INITIALIZING';
+    setIsInitializing(isInitializingPhase);
+  }, [rideStateDataForWorkflow?.status?.phase]);
+
   // 11. Effect for cleanup on component unmount
   useEffect(() => {
     logTs(`[Orchestrator Mount] Component/hook mounted.`);
@@ -336,5 +343,6 @@ export const useRideOrchestrator = (
     dismissSummaryAndReset: workflowApi.dismissSummaryAndReset,
     validateEmailUtil,
     validateScooterIdUtil,
+    isStarting: startMutation.isPending || isInitializing, // Modified to include initialization state
   };
 };
