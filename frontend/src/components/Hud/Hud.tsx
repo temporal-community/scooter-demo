@@ -40,7 +40,13 @@ export default function Hud() {
   return (
     <div className="space-y-4 p-4 max-w-md mx-auto font-sans">
       {internalWorkflowId && (
-        <p className="text-center text-xs text-gray-500 font-mono break-all">
+        <p className={`text-center text-xs font-mono break-all ${
+          internalWorkflowId.includes('9')
+            ? 'text-red-700'
+            : internalWorkflowId.endsWith('1234')
+              ? 'text-yellow-700'
+              : 'text-gray-500'
+        }`}>
           Workflow: {internalWorkflowId}
         </p>
       )}
