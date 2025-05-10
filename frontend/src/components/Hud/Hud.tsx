@@ -1,0 +1,113 @@
+// Purpose: Main refactored HUD component.
+import { useRideOrchestrator } from '../../hooks/useRideOrchestrator'; // Adjust path
+import { RideForm } from './RideForm';
+import { RideSummaryDisplay } from './RideSummaryDisplay';
+import { LiveStatsDisplay } from './LiveStatsDisplay';
+import { ErrorMessageDisplay } from './ErrorMessage';
+import { WorkflowFailureDisplay } from './WorkflowFailureDisplay';
+// Stat and BreakdownStat are used within RideSummaryDisplay and LiveStatsDisplay
+
+export default function Hud() {
+  const {
+    email,
+    setEmail,
+    emailError,
+    setEmailError,
+    scooterId,
+    setScooterId,
+    scooterIdError,
+    setScooterIdError,
+    isRideActive,
+    rideStateData,
+    isLoadingRideState,
+    showSummary,
+    errorMessage,
+    rideStatusMessage,
+    // localElapsedSeconds, // Available if direct display needed, but storeElapsed is primary
+    storeDistance,
+    storeElapsed,
+    // storeTokens, // Available if direct display needed
+    internalWorkflowId,
+    startMutation,
+    endMutation,
+    handleStartRide,
+    handleEndRide,
+    dismissSummaryAndReset,
+    validateEmailUtil,
+    validateScooterIdUtil
+  } = useRideOrchestrator();
+
+  return (
+    <div className="space-y-4 p-4 max-w-md mx-auto font-sans">
+      {internalWorkflowId && (
+        <p className="text-center text-xs text-gray-500 font-mono break-all">
+          Workflow: {internalWorkflowId}
+        </p>
+      )}
+
+      <ErrorMessageDisplay message={errorMessage} />
+
+      <RideSummaryDisplay
+        showSummary={showSummary}
+        isRideActive={isRideActive}
+        rideStateData={rideStateData}
+        distance={storeDistance}
+        elapsedTime={storeElapsed} // Pass formatted time from store
+        onDismissSummary={dismissSummaryAndReset}
+      />
+
+      <div className="space-y-2">
+        <p className="text-center text-sm text-gray-600 min-h-[20px]">{rideStatusMessage}</p>
+      </div>
+      
+      {/* RideForm is conditionally rendered inside itself based on isRideActive, startMutation.isPending, showSummary */}
+      <RideForm
+        email={email}
+        setEmail={setEmail}
+        emailError={emailError}
+        setEmailError={setEmailError}
+        scooterId={scooterId}
+        setScooterId={setScooterId}
+        scooterIdError={scooterIdError}
+        setScooterIdError={setScooterIdError}
+        onStartRide={handleStartRide}
+        isRideActive={isRideActive}
+        isStarting={startMutation.isPending}
+        showSummary={showSummary}
+        validateEmail={validateEmailUtil}
+        validateScooterId={validateScooterIdUtil}
+      />
+
+      {/* End Ride Button: Show if ride is active AND not failed */}
+      {isRideActive && rideStateData?.status?.phase !== 'FAILED' && (
+        <button
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          onClick={handleEndRide}
+          disabled={!isRideActive || endMutation.isPending}
+        >
+          End Ride
+        </button>
+      )}
+      
+      {/* LiveStatsDisplay is conditionally rendered inside itself */}
+      <LiveStatsDisplay
+        rideStateData={rideStateData}
+        distance={storeDistance}
+        elapsedTime={storeElapsed} // Pass formatted time from store
+        isLoading={isLoadingRideState}
+      />
+      
+      {/* WorkflowFailureDisplay is conditionally rendered inside itself */}
+      <WorkflowFailureDisplay
+        rideStateData={rideStateData}
+        email={email}
+        setEmail={setEmail}
+        emailError={emailError}
+        setEmailError={setEmailError}
+        onRetry={handleStartRide} // Retry uses the same start ride logic
+        isRetrying={startMutation.isPending}
+        validateEmail={validateEmailUtil}
+      />
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import GameCanvas from './components/GameCanvas';
-import Hud from './components/Hud';
+import Hud from './components/Hud/Hud';
 
 export default function App() {
   return (

@@ -16,6 +16,7 @@ class RideScene extends Phaser.Scene {
   private isAnimating = useRideStore.getState().isAnimating;
   private movementDisabledMessageText: Phaser.GameObjects.Text | null = null;
   private unsubscribe: (() => void) | null = null;
+  private lastWorkflowId: string | null = useRideStore.getState().workflowId;
 
   // Configurable rider scale and vertical position
   private readonly riderScale = 0.83; // Adjusted for 144px sprites (was 2.5 for 48px sprites)
@@ -75,17 +76,24 @@ class RideScene extends Phaser.Scene {
     this.cursors = keyboard.createCursorKeys();
 
     // Set up store subscription after scene is initialized
-    let currentMovementDisabledMessage = useRideStore.getState().movementDisabledMessage;
+    let currentMovementDisabledMessage: string | null = null;
     
     this.unsubscribe = useRideStore.subscribe((state) => {
       const newIsAnimating = state.isAnimating;
-      if (this.isAnimating !== newIsAnimating) {
-        this.isAnimating = newIsAnimating;
-        // Reset distance when starting a new ride
-        if (newIsAnimating) {
+      
+      // Only reset distance when starting a new ride (new workflowId)
+      if (state.workflowId !== this.lastWorkflowId) {
+        this.lastWorkflowId = state.workflowId;
+        if (state.workflowId !== null) { // New ride starting
           this.distanceFeet = 0;
           this.setDistance(0);
         }
+      }
+
+      // Handle animation state changes
+      if (this.isAnimating !== newIsAnimating) {
+        this.isAnimating = newIsAnimating;
+        
         // Update animation state if rider exists
         if (this.rider) {
           if (newIsAnimating && this.cursors.right?.isDown) {
