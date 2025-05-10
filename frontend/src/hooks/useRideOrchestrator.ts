@@ -159,12 +159,7 @@ export const useRideOrchestrator = (
         const dataResponse = await startMutation.mutateAsync({ emailAddress: email, scooterId, pricePerThousand, currency });
         logTs('[Orchestrator handleStartRide] Start success.', dataResponse);
         
-        setUnlockSuccessMessageActive(true);
-        unlockMessageTimeoutRef.current = setTimeout(() => {
-          setUnlockSuccessMessageActive(false);
-          unlockMessageTimeoutRef.current = null;
-        }, 3000);
-
+        // Don't show unlock success message yet - wait for initialization to complete
         storeReset();
         lastBucketRef.current = 0;
         const startTimeFromServer = dataResponse.startedAt ? new Date(dataResponse.startedAt).getTime() : Date.now();
@@ -208,6 +203,36 @@ export const useRideOrchestrator = (
     workflowApi, storeReset, storeSetIsAnimating, storeSetMovementDisabledMessage, storeSetWorkflowId, navigate,
     // No need to add setUnlockSuccessMessageActive to deps for useCallback itself, it's a local setter
   ]);
+
+  // Effect to show unlock success message only after successful initialization
+  useEffect(() => {
+    const currentPhase = rideStateDataForWorkflow?.status?.phase;
+    const wasInitializing = isInitializing;
+    
+    // If we were initializing and now we're active, show the success message
+    if (wasInitializing && currentPhase === 'ACTIVE') {
+      setUnlockSuccessMessageActive(true);
+      if (unlockMessageTimeoutRef.current) {
+        clearTimeout(unlockMessageTimeoutRef.current);
+      }
+      unlockMessageTimeoutRef.current = setTimeout(() => {
+        setUnlockSuccessMessageActive(false);
+        unlockMessageTimeoutRef.current = null;
+      }, 3000);
+    }
+  }, [rideStateDataForWorkflow?.status?.phase, isInitializing]);
+
+  // Effect to clear unlock message if initialization fails
+  useEffect(() => {
+    const currentPhase = rideStateDataForWorkflow?.status?.phase;
+    if (currentPhase === 'FAILED' && unlockSuccessMessageActive) {
+      setUnlockSuccessMessageActive(false);
+      if (unlockMessageTimeoutRef.current) {
+        clearTimeout(unlockMessageTimeoutRef.current);
+        unlockMessageTimeoutRef.current = null;
+      }
+    }
+  }, [rideStateDataForWorkflow?.status?.phase]);
 
   const handleEndRide = useCallback(async () => {
     logTs(`[Orchestrator handleEndRide] Called. internalWorkflowId: ${workflowApi.internalWorkflowId}`);
