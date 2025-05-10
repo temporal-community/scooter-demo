@@ -28,7 +28,7 @@ export const useRideOrchestrator = (
   navigate?: NavigateFunction
 ) => {
   // Log hook initialization with incoming parameters
-  logTs('[useRideOrchestrator] Hook initialized.', { workflowIdFromUrl });
+  // logTs('[useRideOrchestrator] Hook initialized.', { workflowIdFromUrl });
 
   // Destructure state and setters from Zustand store
   const {
@@ -90,24 +90,6 @@ export const useRideOrchestrator = (
 
   // Custom hook to manage the elapsed time timer
   const localElapsedSeconds = useRideTimer(isRideActiveState, rideStartTime);
-
-  // Callback to show a temporary error message for 5 seconds
-  const showTemporaryError = useCallback((message: string) => {
-    logTs(`[showTemporaryError] Called. Current errorMessage: "${errorMessage}". New message: "${message}"`);
-    setErrorMessage(message); // Set the new error message
-    logTs(`[showTemporaryError] setErrorMessage called with: "${message}"`);
-    if (errorTimeoutRef.current) {
-      logTs('[showTemporaryError] Clearing existing error timeout ref:', errorTimeoutRef.current);
-      clearTimeout(errorTimeoutRef.current); // Clear any existing timeout
-    }
-    // Set a new timeout to clear the error message after 5 seconds
-    errorTimeoutRef.current = setTimeout(() => {
-      logTs(`[showTemporaryError] 5s TIMEOUT FIRED. Clearing errorMessage. Message was: "${message}"`);
-      setErrorMessage(null); // Clear the error message
-      logTs(`[showTemporaryError] setErrorMessage called with null after 5s timeout.`);
-    }, 5000);
-    logTs('[showTemporaryError] New error timeout ref set:', errorTimeoutRef.current);
-  }, [errorMessage]); // Dependency: errorMessage (to log current value), setErrorMessage is stable.
 
   // Custom hook for handling ride mutations (start, end, addDistance)
   const { 
@@ -184,6 +166,31 @@ export const useRideOrchestrator = (
     refetch: refetchRideState
   } = useRideStatePoller(internalWorkflowId, pollerEnabled);
 
+  // Callback to show a temporary error message for 5 seconds
+  const showTemporaryError = useCallback((message: string) => {
+    logTs(`[showTemporaryError] Called. Current errorMessage: "${errorMessage}". New message: "${message}"`);
+    setErrorMessage(message); // Set the new error message
+    logTs(`[showTemporaryError] setErrorMessage called with: "${message}"`);
+    if (errorTimeoutRef.current) {
+      logTs('[showTemporaryError] Clearing existing error timeout ref:', errorTimeoutRef.current);
+      clearTimeout(errorTimeoutRef.current); // Clear any existing timeout
+    }
+    
+    // Only set timeout if we're not in INITIALIZING phase
+    const isInitializing = rideStateData?.status?.phase === 'INITIALIZING';
+    if (!isInitializing) {
+      // Set a new timeout to clear the error message after 5 seconds
+      errorTimeoutRef.current = setTimeout(() => {
+        logTs(`[showTemporaryError] 5s TIMEOUT FIRED. Clearing errorMessage. Message was: "${message}"`);
+        setErrorMessage(null); // Clear the error message
+        logTs(`[showTemporaryError] setErrorMessage called with null after 5s timeout.`);
+      }, 5000);
+      logTs('[showTemporaryError] New error timeout ref set:', errorTimeoutRef.current);
+    } else {
+      logTs('[showTemporaryError] No timeout set as ride is in INITIALIZING phase');
+    }
+  }, [errorMessage, rideStateData?.status?.phase]); // Add rideStateData?.status?.phase to dependencies
+
   // Effect to update the elapsed time in the Zustand store whenever localElapsedSeconds changes
   useEffect(() => {
     logTs(`[useEffect localElapsedSeconds] Updating storeElapsed. localElapsedSeconds: ${localElapsedSeconds}, fmtTime: ${fmtTime(localElapsedSeconds)}`);
@@ -234,8 +241,19 @@ export const useRideOrchestrator = (
       logTs(`[useEffect rideStateData] Setting isRideActiveState to: ${isActiveFromServer}. Current: ${isRideActiveState}`);
       if (isRideActiveState !== isActiveFromServer) setIsRideActiveState(isActiveFromServer);
       
-      logTs(`[useEffect rideStateData] Setting storeSetIsAnimating to: ${isActiveFromServer && !isInitializing}.`);
-      storeSetIsAnimating(isActiveFromServer && !isInitializing); 
+      if (serverPhase === 'BLOCKED') {
+        logTs(`[useEffect rideStateData] Phase is BLOCKED, setting hardcoded movementDisabledMessage.`);
+        storeSetMovementDisabledMessage('Approve ride signal required to continue');
+      } else {
+        // For all other phases, continue to use lastError from the backend
+        logTs(`[useEffect rideStateData] Phase is ${serverPhase}, setting movementDisabledMessage from lastError:`, rideStateData.status.lastError);
+        storeSetMovementDisabledMessage(rideStateData.status.lastError || null);
+      }
+
+      // Your existing logic for setting animation state (which correctly stops the rider)
+      const canAnimate = isActiveFromServer && !isInitializing && serverPhase !== 'BLOCKED';
+      logTs(`[useEffect rideStateData] Setting storeSetIsAnimating to: ${canAnimate}. (Based on: isActiveFromServer: ${isActiveFromServer}, isInitializing: ${isInitializing}, serverPhase: ${serverPhase})`);
+      storeSetIsAnimating(canAnimate);
 
       if (isActiveFromServer && rideStateData.status.startedAt) {
         const serverStartTimeMs = new Date(rideStateData.status.startedAt).getTime();
@@ -270,7 +288,13 @@ export const useRideOrchestrator = (
       }
       
       storeSetTokens(rideStateData.status.tokens?.total || 0);
-      storeSetMovementDisabledMessage(rideStateData.status.lastError || null);
+      // storeSetMovementDisabledMessage(rideStateData.status.lastError || null);
+
+      // Clear error message if we're no longer in INITIALIZING phase
+      if (!isInitializing && errorMessage && errorMessage.includes('Ride initialization is taking too long')) {
+        logTs(`[useEffect rideStateData] No longer in INITIALIZING phase, clearing initialization error message`);
+        setErrorMessage(null);
+      }
 
     } else {
       logTs(`[useEffect rideStateData] No rideStateData or no rideStateData.status. internalWorkflowId: ${internalWorkflowId}`);
@@ -402,12 +426,12 @@ export const useRideOrchestrator = (
 
   // Effect for sending distance updates
   useEffect(() => {
-    logTs(`[useEffect addDistance] START. isRideActiveState: ${isRideActiveState}, storeDistance: ${storeDistance}, internalWorkflowId: ${internalWorkflowId}, lastBucketRef.current: ${lastBucketRef.current}`);
+    // logTs(`[useEffect addDistance] START. isRideActiveState: ${isRideActiveState}, storeDistance: ${storeDistance}, internalWorkflowId: ${internalWorkflowId}, lastBucketRef.current: ${lastBucketRef.current}`);
     if (!isRideActiveState || storeDistance <= 0 || !internalWorkflowId) {
       if (storeDistance === 0) {
         lastBucketRef.current = 0; 
       }
-      logTs(`[useEffect addDistance] END (conditions not met).`);
+      // logTs(`[useEffect addDistance] END (conditions not met).`);
       return;
     }
     const currentBucket = Math.floor(storeDistance / 100);
@@ -419,7 +443,7 @@ export const useRideOrchestrator = (
       }
       lastBucketRef.current = currentBucket; 
     }
-    logTs(`[useEffect addDistance] END.`);
+    // logTs(`[useEffect addDistance] END.`);
   }, [storeDistance, isRideActiveState, addDistanceMutation, internalWorkflowId]);
   
   // Callback to dismiss the ride summary and reset all ride-related state

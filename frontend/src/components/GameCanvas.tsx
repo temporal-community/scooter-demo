@@ -74,6 +74,7 @@ class RideScene extends Phaser.Scene {
     
     this.unsubscribe = useRideStore.subscribe((state) => {
       const newIsAnimating = state.isAnimating;
+      console.log('[RideScene subscribe] Store update. Phase from orchestrator (via isAnimating indirectly):', state.isAnimating ? 'Probably ACTIVE/INIT' : 'Probably NOT ACTIVE/INIT/BLOCKED', 'Received movementDisabledMessage:', state.movementDisabledMessage);
       
       if (state.workflowId !== this.lastWorkflowId) {
         this.lastWorkflowId = state.workflowId;
@@ -97,6 +98,7 @@ class RideScene extends Phaser.Scene {
       // Always update message display if it changes or if animation state changes,
       // as the message visibility criteria might depend on both.
       if (currentMovementDisabledMessage !== state.movementDisabledMessage || this.isAnimating !== newIsAnimating) {
+        console.log('[RideScene subscribe] Message or anim changed. Updating display. Old msg:', currentMovementDisabledMessage, 'New msg:', state.movementDisabledMessage);
         currentMovementDisabledMessage = state.movementDisabledMessage;
         this.updateDisabledMessageDisplay(currentMovementDisabledMessage);
       }
