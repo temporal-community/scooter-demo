@@ -26,6 +26,7 @@ export const RideSummaryDisplay: React.FC<RideSummaryDisplayProps> = ({
 
   return (
     <div className="border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center shadow-md animate-fade-in">
+      <h3 className="text-lg font-bold text-green-700 mb-3 text-center">Ride Summary</h3>
       {!rideStateData ? (
         <div className="text-center">
           <p>Loading ride summary...</p>
