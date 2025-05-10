@@ -28,7 +28,7 @@ export const getRideDetailsQuery = defineQuery('getRideDetails');
 // After this many tokens have been consumed in a single ride, 
 // the Workflow Execution blocks until it receives the approveRide
 // Signal. It ends if this approval isn't received quickly enough.  
-const TokenConsumptionApprovalLimit = 12;
+const TokenConsumptionApprovalLimit = 70;
 
 export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatus> {
   let hasRideEnded = false;

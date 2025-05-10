@@ -1,4 +1,4 @@
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate, Link } from 'react-router-dom';
 import GameCanvas from './components/GameCanvas';
 import Hud from './components/Hud/Hud';
 
@@ -27,7 +27,9 @@ export default function App() {
       <header className="flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🛴</span>
-          <span className="text-2xl font-bold text-gray-800 tracking-tight">Scooter Demo</span>
+          <Link to="/" className="text-2xl font-bold text-gray-800 tracking-tight" tabIndex={-1}>
+            Scooter Demo
+          </Link>
         </div>
         <div className="w-full mt-2 border-t border-gray-100" />
       </header>
