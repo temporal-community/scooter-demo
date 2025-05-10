@@ -26,8 +26,8 @@ export const useRideMutations = ({
   validateScooterIdFn,
 }: UseRideMutationsProps) => {
   const startMutation = useMutation({
-    mutationFn: async (params: { email: string; scooterId: string }) => {
-      const emailValidation = validateEmailFn(params.email);
+    mutationFn: async (params: { emailAddress: string; scooterId: string; pricePerThousand: number; currency: string }) => {
+      const emailValidation = validateEmailFn(params.emailAddress);
       if (!emailValidation.isValid) {
         throw new Error(emailValidation.error || 'Invalid email format');
       }
@@ -35,8 +35,8 @@ export const useRideMutations = ({
       if (!scooterIdValidation.isValid) {
         throw new Error(scooterIdValidation.error || 'Invalid scooter ID');
       }
-      console.log('Starting ride for email:', params.email, 'scooter:', params.scooterId);
-      return startRide(params.scooterId, params.email);
+      console.log('Starting ride for email:', params.emailAddress, 'scooter:', params.scooterId);
+      return startRide(params.scooterId, params.emailAddress);
     },
     onSuccess: onStartSuccess,
     onError: onStartError,
