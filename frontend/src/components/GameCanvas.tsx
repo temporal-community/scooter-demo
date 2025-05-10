@@ -18,10 +18,10 @@ class RideScene extends Phaser.Scene {
   private lastWorkflowId: string | null = useRideStore.getState().workflowId;
 
   // Configurable rider scale and vertical position
-  private readonly riderScale = 0.83; 
-  private readonly riderYPercent = 0.65; 
-  private readonly bgYOffset = -240; 
-  private readonly bgScale = 1; 
+  private readonly riderScale = 1.245;
+  private readonly riderYPercent = 0.4;
+  private readonly bgYOffset = -240;
+  private readonly bgScale = 1;
 
   constructor() {
     super({ key: 'RideScene' });
