@@ -32,6 +32,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-size: 1rem;
+  background-color: #ff0000;
 }
 
 h1 {
@@ -77,4 +78,15 @@ button:focus-visible {
   justify-content: flex-end;
   height: 100%;
   width: 100%;
+  position: relative;
+  flex: 1 1 0%;
+}
+#game-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: block;
 }

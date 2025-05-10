@@ -181,8 +181,8 @@ export default function GameCanvas() {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 800, // Initial width, will be scaled by FIT
-      height: 600, // Initial height, will be scaled by FIT
+      width: 800, // Initial width, will be scaled by RESIZE
+      height: 600, // Initial height, will be scaled by RESIZE
       backgroundColor: '#87ceeb',
       physics: {
         default: 'arcade',
@@ -192,9 +192,8 @@ export default function GameCanvas() {
       },
       scene: RideScene,
       scale: {
-        mode: Phaser.Scale.FIT,
-        // parent: 'game-container', // Optional: if you want to specify parent explicitly
-        autoCenter: Phaser.Scale.CENTER_BOTH // Changed to CENTER_BOTH for better centering
+        mode: Phaser.Scale.RESIZE,
+        autoCenter: Phaser.Scale.NO_CENTER
       }
     };
 
