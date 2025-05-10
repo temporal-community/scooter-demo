@@ -124,18 +124,18 @@ class RideScene extends Phaser.Scene {
     // Actual movement is controlled by `this.isAnimating` in the `update` method.
     if (message) {
       this.movementDisabledMessageText = this.add.text(
-        this.scale.width * 0.5,  // Centered horizontally
-        this.scale.height / 3,   // Positioned higher for visibility
+        this.scale.width * 0.2,  // 20% of width
+        this.scale.height / 3.3,   // one-third from top
         message,
         { 
-          font: 'bold 18px Arial', // Made font bolder
-          color: '#FFD700', // Gold color for better visibility on various backgrounds
-          backgroundColor: '#000000B3', // Slightly more opaque background
-          padding: { x: 15, y: 10 }, // Increased padding
+          font: '18px Arial',
+          color: '#ffffff', 
+          backgroundColor: '#000000aa',
+          padding: { x: 10, y: 5 },
           align: 'center',
-          wordWrap: { width: this.scale.width * 0.8, useAdvancedWrap: true }, // Wrap based on canvas width
-          lineSpacing: 5,
-          fixedWidth: this.scale.width * 0.8, // Ensure text is centered within this width
+          wordWrap: { width: 200 },  // Add word wrap with max width
+          lineSpacing: 5,            // Add some spacing between lines
+          fixedWidth: 200,
         }
       ).setOrigin(0.5).setDepth(100); // Ensure it's on top
     }
