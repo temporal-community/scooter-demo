@@ -97,6 +97,9 @@ export const RideForm: React.FC<RideFormProps> = ({
         {scooterIdError && (
           <p className="text-red-500 text-sm mt-1">{scooterIdError}</p>
         )}
+        {scooterId.includes('9') && (
+          <p className="text-red-700 bg-red-50 rounded px-2 py-1 text-sm mt-1">This will trigger a workflow bug that will need to be fixed for the ride to proceed</p>
+        )}
         {scooterId === '1234' && (
           <p className="text-yellow-700 bg-yellow-50 rounded px-2 py-1 text-sm mt-1">This scooter ID will simulate a network outage</p>
         )}
