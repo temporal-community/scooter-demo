@@ -211,7 +211,6 @@ When you are ready to end the ride, click the **End Ride** button in the
 UI.
 
 
-
 ### Network Outage
 In this scenario, the first Activity in the Workflow (which calls a 
 Stripe API to look up the customer ID corresponding to the email 
@@ -256,7 +255,6 @@ We especially recommend using the Temporal Web UI here, since its
 Activity Execution to fail and will also identify the specific line 
 of code responsible.
 
-
 To trigger the bug, use a scooter ID that contains a 9, such as `1239`.
 
 Wait for the Activity to fail, use the Temporal Web UI to identify the 
@@ -266,6 +264,20 @@ regex to `0-9`. Afterwards, you will need to kill and re-run the
 to take effect (if not using nodemon to do that automatically). Once 
 you have done these things, you should find that the Activity will 
 succeed upon the next retry attempt. 
+
+
+### Ride Awaits Approval to Continue (Human-in-the-Loop)
+To prevent riders from incurring excessive charges if they forget to 
+end the ride quickly enough, the Workflow is designed to pause the 
+ride after 70 tokens have been consumed. In order to continue the 
+ride, you must send the `approveRide` Signal to the Workflow Execution
+You can do this by using the Temporal Web UI. If you prefer, you can 
+also use the Temporal CLI, replacing `1000` in the command below with 
+the scooter ID for your ride:
+
+```bash
+temporal workflow signal --workflow-id scooter-session-1000 --name approveRide
+```
 
 
 ## Contributing

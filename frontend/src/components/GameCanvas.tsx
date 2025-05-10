@@ -1,4 +1,3 @@
-// src/components/GameCanvas.tsx
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useRideStore } from '../stores/rideStore';
@@ -16,32 +15,30 @@ class RideScene extends Phaser.Scene {
   private isAnimating = useRideStore.getState().isAnimating;
   private movementDisabledMessageText: Phaser.GameObjects.Text | null = null;
   private unsubscribe: (() => void) | null = null;
+  private lastWorkflowId: string | null = useRideStore.getState().workflowId;
 
   // Configurable rider scale and vertical position
-  private readonly riderScale = 0.83; // Adjusted for 144px sprites (was 2.5 for 48px sprites)
-  private readonly riderYPercent = 0.65; // Change this value to move the rider up/down (0 = top, 1 = bottom)
-  private readonly bgYOffset = -240; // Change this value to move the background up/down
-  private readonly bgScale = 1; // Change this value to scale the background
+  private readonly riderScale = 1.245;
+  private readonly riderYPercent = 0.4;
+  private readonly bgYOffset = -240;
+  private readonly bgScale = 1;
 
   constructor() {
     super({ key: 'RideScene' });
   }
 
   create() {
-    // Full-canvas scrolling background
     const bgHeight = this.scale.height - this.bgYOffset;
     this.bg = this.add
       .tileSprite(0, this.bgYOffset, this.scale.width, bgHeight, 'bg')
       .setOrigin(0, 0)
       .setScale(this.bgScale);
 
-    // Check if the rider texture exists
     if (!this.textures.exists('rider')) {
       console.error('Rider texture not found!');
       return;
     }
 
-    // Create animation with error handling
     try {
       this.anims.create({
         key: 'ride',
@@ -54,13 +51,11 @@ class RideScene extends Phaser.Scene {
       return;
     }
 
-    // Create rider sprite with error handling
     try {
       this.rider = this.add
         .sprite(180, this.scale.height * this.riderYPercent, 'rider')
         .setScale(this.riderScale);
       
-      // Only start animation if isAnimating is true
       if (this.isAnimating) {
         this.rider.play('ride');
       }
@@ -69,24 +64,28 @@ class RideScene extends Phaser.Scene {
       return;
     }
 
-    // Cursor keys helper
     const keyboard = this.input.keyboard;
     if (!keyboard) throw new Error('Keyboard not available');
     this.cursors = keyboard.createCursorKeys();
 
-    // Set up store subscription after scene is initialized
-    let currentMovementDisabledMessage = useRideStore.getState().movementDisabledMessage;
+    let currentMovementDisabledMessage: string | null = useRideStore.getState().movementDisabledMessage;
+    // Initialize message display
+    this.updateDisabledMessageDisplay(currentMovementDisabledMessage);
     
     this.unsubscribe = useRideStore.subscribe((state) => {
       const newIsAnimating = state.isAnimating;
-      if (this.isAnimating !== newIsAnimating) {
-        this.isAnimating = newIsAnimating;
-        // Reset distance when starting a new ride
-        if (newIsAnimating) {
+      console.log('[RideScene subscribe] Store update. Phase from orchestrator (via isAnimating indirectly):', state.isAnimating ? 'Probably ACTIVE/INIT' : 'Probably NOT ACTIVE/INIT/BLOCKED', 'Received movementDisabledMessage:', state.movementDisabledMessage);
+      
+      if (state.workflowId !== this.lastWorkflowId) {
+        this.lastWorkflowId = state.workflowId;
+        if (state.workflowId !== null) { 
           this.distanceFeet = 0;
           this.setDistance(0);
         }
-        // Update animation state if rider exists
+      }
+
+      if (this.isAnimating !== newIsAnimating) {
+        this.isAnimating = newIsAnimating;
         if (this.rider) {
           if (newIsAnimating && this.cursors.right?.isDown) {
             this.rider.play('ride');
@@ -94,18 +93,17 @@ class RideScene extends Phaser.Scene {
             this.rider.stop();
           }
         }
-        // Update message display when animation state changes
-        this.updateDisabledMessageDisplay(state.movementDisabledMessage);
       }
 
-      // Handle movement disabled message changes
-      if (currentMovementDisabledMessage !== state.movementDisabledMessage) {
+      // Always update message display if it changes or if animation state changes,
+      // as the message visibility criteria might depend on both.
+      if (currentMovementDisabledMessage !== state.movementDisabledMessage || this.isAnimating !== newIsAnimating) {
+        console.log('[RideScene subscribe] Message or anim changed. Updating display. Old msg:', currentMovementDisabledMessage, 'New msg:', state.movementDisabledMessage);
         currentMovementDisabledMessage = state.movementDisabledMessage;
         this.updateDisabledMessageDisplay(currentMovementDisabledMessage);
       }
     });
 
-    // Clean up subscription when scene is destroyed
     this.events.on('destroy', () => {
       if (this.unsubscribe) {
         this.unsubscribe();
@@ -115,71 +113,66 @@ class RideScene extends Phaser.Scene {
   }
 
   private updateDisabledMessageDisplay(message: string | null) {
+    // Clear existing message if any
     if (this.movementDisabledMessageText) {
       this.movementDisabledMessageText.destroy();
       this.movementDisabledMessageText = null;
     }
 
-    if (message && !this.isAnimating) {
+    // Display new message if it exists.
+    // The message should be shown regardless of the animation state.
+    // Actual movement is controlled by `this.isAnimating` in the `update` method.
+    if (message) {
       this.movementDisabledMessageText = this.add.text(
-        this.scale.width * 0.2,  // 10% of width
-        this.scale.height / 3.3,   // one-third from top
+        this.scale.width * 0.2,  // 20% of width
+        this.scale.height / 6, // 1/6 from top
         message,
         { 
-          font: '18px Arial',
+          font: '24px Helvetica',
           color: '#ffffff', 
           backgroundColor: '#000000aa',
-          padding: { x: 10, y: 5 },
+          padding: { x: 15, y: 10 },
           align: 'center',
           wordWrap: { width: 200 },  // Add word wrap with max width
-          lineSpacing: 5             // Add some spacing between lines
+          lineSpacing: 5,            // Add some spacing between lines
+          fixedWidth: 250,
         }
-      ).setOrigin(0.5).setDepth(100);
+      ).setOrigin(0.5).setDepth(100); // Ensure it's on top
     }
   }
 
   preload() {
-    // Swap these paths for your own sprite sheet / background
     this.load.image('bg', '/assets/bg.png');
     this.load.spritesheet('rider', '/assets/rider.png', {
       frameWidth: 144,
       frameHeight: 144,
     });
 
-    // Add loading error handlers
     this.load.on('loaderror', (file: any) => {
       console.error('Error loading file:', file.key);
     });
   }
 
   update(_: number, delta: number) {
-    // Only allow movement and animation if isAnimating is true
+    // Only allow movement and animation if isAnimating is true AND right arrow is pressed
     if (!this.isAnimating || !this.cursors.right?.isDown) {
-      if (this.rider.anims.isPlaying) {
+      if (this.rider && this.rider.anims && this.rider.anims.isPlaying) {
         this.rider.stop();
       }
       return;
     }
 
-    // Start animation if it's not already playing
-    if (!this.rider.anims.isPlaying) {
+    if (this.rider && this.rider.anims && !this.rider.anims.isPlaying) {
       this.rider.play('ride');
     }
 
-    // Move 180 px per second → tweak as you like
     const dx = (delta / 1000) * 180;
-    // Keep rider in fixed position, only scroll background
     this.bg.tilePositionX += dx;
-
-    // 100 px ≈ 20 feet (more realistic scale)
     this.distanceFeet += dx / 5;
     this.setDistance(this.distanceFeet);
   }
 }
 
-/**
- * React wrapper: renders the Phaser canvas full-width / height.
- */
 export default function GameCanvas() {
   const gameRef = useRef<Phaser.Game | null>(null);
 
@@ -188,8 +181,8 @@ export default function GameCanvas() {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
+      width: 800, // Initial width, will be scaled by RESIZE
+      height: 600, // Initial height, will be scaled by RESIZE
       backgroundColor: '#87ceeb',
       physics: {
         default: 'arcade',
@@ -199,14 +192,23 @@ export default function GameCanvas() {
       },
       scene: RideScene,
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.NO_CENTER
       }
     };
 
     gameRef.current = new Phaser.Game(config);
 
+    // Handle window resize to ensure Phaser canvas rescales
+    const handleResize = () => {
+      if (gameRef.current) {
+        // gameRef.current.scale.resize(window.innerWidth, window.innerHeight); // Not needed with FIT and autoCenter
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
+      window.removeEventListener('resize', handleResize);
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;
@@ -214,5 +216,5 @@ export default function GameCanvas() {
     };
   }, []);
 
-  return <div id="game-container" className="w-full h-full" />;
+  return <div id="game-container" className="w-full h-full" />
 }
