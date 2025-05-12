@@ -176,7 +176,8 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       const isActiveFromServer = isActivePhase(serverPhase);
       const isInitializing = serverPhase === 'INITIALIZING';
       const isFailed = serverPhase === 'FAILED';
-      const isEnded = serverPhase === 'ENDED';
+      const isTimedOut = serverPhase === 'TIMED_OUT';
+      const isEnded = serverPhase === 'ENDED' || isTimedOut;
 
       if (isInitializing && !initializingStartTime) {
         setInitializingStartTime(Date.now());
@@ -202,6 +203,8 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
           // For other FAILED reasons, use the API's lastError or a more generic failure message
           storeSetMovementDisabledMessage(lastErrorFromApi || 'Ride failed. Please try again.');
         }
+      } else if (isTimedOut) {
+        storeSetMovementDisabledMessage('Ride timed out. Unlock to start a new session.');
       } else if (isEnded) {
         storeSetMovementDisabledMessage('Ride ended. Unlock to start a new session.');
       } else {

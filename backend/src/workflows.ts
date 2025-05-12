@@ -168,7 +168,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
         if (approvalOrEnd) {
           // end the Workflow Execution (and the ride)
           await EndRide(input);
-          rideStatus.phase = 'ENDED';
+          rideStatus.phase = 'TIMED_OUT';
           rideStatus.endedAt = new Date().toISOString();
           return rideStatus;
         }

@@ -9,7 +9,7 @@ export type ActivePhase = typeof ACTIVE_PHASES[number];
  * This should align with your actual API response structure.
  */
 export interface RideStateStatus {
-  phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED' | 'BLOCKED';
+  phase: 'INITIALIZING' | 'ACTIVE' | 'ENDED' | 'FAILED' | 'BLOCKED' | 'TIMED_OUT';
   startedAt: string;
   lastMeterAt: string;
   endedAt?: string;

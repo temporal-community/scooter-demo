@@ -50,8 +50,11 @@ export const LiveStatsDisplay: React.FC<LiveStatsDisplayProps> = ({
       <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
       <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
       <Stat label="Time" value={elapsedTime} />
-      <Stat 
-        label="Cost" 
+      {typeof rideStateData.rideTimeoutSecs === 'number' && (
+        <Stat label="Time Limit" value={`${rideStateData.rideTimeoutSecs}s`} />
+      )}
+      <Stat
+        label="Cost"
         value={rideStateData.status && typeof rideStateData.pricePerThousand === 'number' && rideStateData.currency
           ? `${rideStateData.currency} ${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}` 
           : 'N/A'} // Changed from 'Loading...' to 'N/A' if data isn't ready
