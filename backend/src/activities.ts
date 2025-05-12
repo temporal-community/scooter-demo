@@ -1,14 +1,14 @@
 import * as activity from '@temporalio/activity';
 import { log } from '@temporalio/activity';
+import Stripe from 'stripe';
 
-const stripeApiKey = process.env["STRIPE_API_KEY"];
+const stripeApiKey = process.env['STRIPE_API_KEY'];
 if (!stripeApiKey) {
-	throw new ReferenceError(`STRIPE_API_KEY environment variable is not defined`);
+  throw new ReferenceError(`STRIPE_API_KEY environment variable is not defined`);
 }
-const stripe = require('stripe')(
-	stripeApiKey,
-	{ apiVersion: '2025-04-30.preview' }
-);
+const stripe = new Stripe(stripeApiKey, {
+  apiVersion: '2025-04-30.preview' as any,
+});
 
 // These define how many tokens are consumed for different aspects of the ride
 const TokensForUnlock = 10;

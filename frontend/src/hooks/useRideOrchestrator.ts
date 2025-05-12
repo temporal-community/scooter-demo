@@ -302,8 +302,10 @@ export const useRideOrchestrator = (
           msg = "Ride in progress. Use the right arrow key on your keyboard to move.";
       }
     } else if (workflowApi.showSummary) {
-      if (rideStateDataForWorkflow?.status?.phase === 'ENDED') { 
+      if (rideStateDataForWorkflow?.status?.phase === 'ENDED') {
         msg = "Ride ended.";
+      } else if (rideStateDataForWorkflow?.status?.phase === 'TIMED_OUT') {
+        msg = "Ride timed out.";
       } else if (workflowApi.internalWorkflowId) {
         msg = `Loading summary for ${workflowApi.internalWorkflowId}...`;
       } else {

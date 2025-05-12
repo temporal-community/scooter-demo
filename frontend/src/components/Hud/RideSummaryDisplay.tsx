@@ -24,9 +24,16 @@ export const RideSummaryDisplay: React.FC<RideSummaryDisplayProps> = ({
     return null;
   }
 
+  const isTimedOut = rideStateData?.status?.phase === 'TIMED_OUT';
+  const containerClasses = isTimedOut
+    ? 'border border-orange-300 bg-orange-50 rounded-lg p-4 mb-4 text-orange-800 flex flex-col items-center shadow-md animate-fade-in'
+    : 'border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center shadow-md animate-fade-in';
+  const headingClasses = isTimedOut ? 'text-orange-700' : 'text-green-700';
+  const headingText = isTimedOut ? 'Ride Timed Out' : 'Ride Summary';
+
   return (
-    <div className="border border-green-300 bg-green-50 rounded-lg p-4 mb-4 text-green-800 flex flex-col items-center shadow-md animate-fade-in">
-      <h3 className="text-lg font-bold text-green-700 mb-3 text-center">Ride Summary</h3>
+    <div className={containerClasses}>
+      <h3 className={`text-lg font-bold ${headingClasses} mb-3 text-center`}>{headingText}</h3>
       {!rideStateData ? (
         <div className="text-center">
           <p>Loading ride summary...</p>
@@ -35,14 +42,17 @@ export const RideSummaryDisplay: React.FC<RideSummaryDisplayProps> = ({
         <div className="w-full space-y-2">
           <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
           <Stat label="Time" value={elapsedTime} />
+          {typeof rideStateData.rideTimeoutSecs === 'number' && (
+            <Stat label="Time Limit" value={`${rideStateData.rideTimeoutSecs}s`} />
+          )}
           <Stat
             label="Cost"
             value={rideStateData?.status?.tokens?.total && rideStateData?.pricePerThousand && rideStateData?.currency
               ? `${rideStateData.currency} ${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}`
               : 'Loading...'}
           />
-          <div className="mt-4 bg-green-100 border border-green-200 rounded-md p-3">
-            <h4 className="text-sm font-semibold text-green-700 mb-2 text-center">Token Breakdown</h4>
+          <div className={`mt-4 rounded-md p-3 border ${isTimedOut ? 'bg-orange-100 border-orange-200' : 'bg-green-100 border-green-200'}`}>
+            <h4 className={`text-sm font-semibold mb-2 text-center ${isTimedOut ? 'text-orange-700' : 'text-green-700'}`}>Token Breakdown</h4>
             <div className="space-y-1">
               <BreakdownStat
                 label="Unlock fee"
@@ -56,7 +66,7 @@ export const RideSummaryDisplay: React.FC<RideSummaryDisplayProps> = ({
                 label="Distance"
                 value={rideStateData?.status?.tokens?.distance?.toString() ?? "0"}
               />
-              <div className="border-t border-green-200 my-2"></div>
+              <div className={`border-t my-2 ${isTimedOut ? 'border-orange-200' : 'border-green-200'}`}></div>
               <BreakdownStat
                 label="Total"
                 value={rideStateData?.status?.tokens?.total?.toString() ?? "0"}
