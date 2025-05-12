@@ -46,7 +46,7 @@ export default function Hud({ workflowIdFromUrl, navigate }: HudProps) {
     <div className="space-y-4 p-4 max-w-md mx-auto font-sans">
       {/* Display Workflow ID (from older version) */}
       {internalWorkflowId && (
-        <p className={`text-center text-xs font-mono break-all ${
+        <p className={`text-center text-[14px] font-mono break-all ${
           internalWorkflowId.includes('9') // Example conditional styling
             ? 'text-red-700'
             : internalWorkflowId.endsWith('1234')
@@ -71,8 +71,8 @@ export default function Hud({ workflowIdFromUrl, navigate }: HudProps) {
       />
 
       {/* Ride Status Message (from older version) */}
-      <div className="space-y-2">
-        <p className="text-center text-sm text-gray-600 min-h-[20px]">{rideStatusMessage}</p>
+      <div className="space-y-1">
+        <p className="text-center text-[14px] text-gray-600 min-h-[16px]">{rideStatusMessage}</p>
       </div>
       
       {/* RideForm (from older version) */}
@@ -96,7 +96,7 @@ export default function Hud({ workflowIdFromUrl, navigate }: HudProps) {
       {/* End Ride Button (from older version) */}
       {isRideActive && rideStateData?.status?.phase !== 'FAILED' && (
         <button
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-1.5 px-2 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-xs"
           onClick={handleEndRide}
           disabled={!isRideActive || endMutation.isPending}
         >

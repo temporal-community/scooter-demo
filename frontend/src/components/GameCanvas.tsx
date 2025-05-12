@@ -19,7 +19,7 @@ class RideScene extends Phaser.Scene {
 
   // Configurable rider scale and vertical position
   private readonly riderScale = 1.245;
-  private readonly riderYPercent = 0.4;
+  private readonly riderYPercent = 0.5;
   private readonly bgYOffset = -240;
   private readonly bgScale = 1;
 

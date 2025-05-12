@@ -28,9 +28,9 @@ export const LiveStatsDisplay: React.FC<LiveStatsDisplayProps> = ({
   // This can happen briefly when a ride starts or if there's a slight delay in the first poll.
   if (!rideStateData?.status) {
     return (
-      <div className="mt-6 space-y-1 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-        <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
-        <p className="text-center text-gray-500">Initializing ride data...</p>
+      <div className="mt-4 space-y-1 p-3 border border-gray-200 rounded-lg shadow-sm bg-white">
+        <h3 className="text-sm font-medium text-gray-700 mb-1 text-center">Live Ride Stats</h3>
+        <p className="text-center text-xs text-gray-500">Initializing ride data...</p>
       </div>
     );
   }
@@ -46,8 +46,8 @@ export const LiveStatsDisplay: React.FC<LiveStatsDisplayProps> = ({
   // }
 
   return (
-    <div className="mt-6 space-y-1 p-4 border border-gray-200 rounded-lg shadow-sm bg-white">
-      <h3 className="text-lg font-semibold text-gray-700 mb-2 text-center">Live Ride Stats</h3>
+    <div className="mt-4 space-y-1 p-3 border border-gray-200 rounded-lg shadow-sm bg-white">
+      <h3 className="text-sm font-medium text-gray-700 mb-1 text-center">Live Ride Stats</h3>
       <Stat label="Distance (ft)" value={Math.round(distance).toString()} />
       <Stat label="Time" value={elapsedTime} />
       {typeof rideStateData.rideTimeoutSecs === 'number' && (
@@ -61,18 +61,18 @@ export const LiveStatsDisplay: React.FC<LiveStatsDisplayProps> = ({
       />
       {/* Ensure rideStateData.status.tokens exists before trying to render the breakdown */}
       {rideStateData.status.tokens && (
-        <div className="mt-4 bg-gray-50 border border-gray-100 rounded-md p-3">
-          <h4 className="text-sm font-semibold text-gray-600 mb-2 text-center">Token Breakdown</h4>
-          <div className="space-y-1">
+        <div className="mt-3 bg-gray-50 border border-gray-100 rounded-md p-2">
+          <h4 className="text-xs font-medium text-gray-600 mb-1 text-center">Token Breakdown</h4>
+          <div className="space-y-0.5">
             <BreakdownStat label="Unlock fee" value={rideStateData.status.tokens.unlock?.toString() ?? "0"} />
             <BreakdownStat label="Ride time" value={rideStateData.status.tokens.time?.toString() ?? "0"} />
             <BreakdownStat label="Distance" value={rideStateData.status.tokens.distance?.toString() ?? "0"} />
-            <div className="border-t border-gray-200 my-2"></div>
+            <div className="border-t border-gray-200 my-1"></div>
             <BreakdownStat label="Total" value={rideStateData.status.tokens.total?.toString() ?? "0"} bold />
             {rideStateData && // rideStateData itself should be checked here too
               typeof rideStateData.pricePerThousand === 'number' &&
               typeof rideStateData.currency === 'string' && (
-                <div className="mt-2 text-xs text-gray-500 text-center">
+                <div className="mt-1.5 text-[12px] text-gray-500 text-center">
                   {`${rideStateData.status.tokens.total} tokens × $${(rideStateData.pricePerThousand / 1000).toFixed(3)} = $${((rideStateData.status.tokens.total * rideStateData.pricePerThousand) / 1000).toFixed(2)}`}
                   <br />
                   {`1,000 tokens = $${rideStateData.pricePerThousand.toFixed(2)} (${rideStateData.currency})`}
@@ -82,7 +82,7 @@ export const LiveStatsDisplay: React.FC<LiveStatsDisplayProps> = ({
         </div>
       )}
       {/* Show "Updating stats..." only if loading AND the ride is considered active client-side */}
-      {isLoading && isRideActiveClient && <p className="text-xs text-gray-400 text-center mt-2">Updating stats...</p>}
+      {isLoading && isRideActiveClient && <p className="text-[12px] text-gray-400 text-center mt-1">Updating stats...</p>}
     </div>
   );
 };
