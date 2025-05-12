@@ -48,15 +48,15 @@ export const WorkflowFailureDisplay: React.FC<WorkflowFailureDisplayProps> = ({
   };
 
   return (
-    <div className="mt-6 border border-red-300 bg-red-50 rounded-lg p-4 mb-4 text-red-800 flex flex-col items-center shadow-md animate-fade-in">
-      <div className="flex items-center mb-3">
-        <svg className="w-7 h-7 text-red-500 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <div className="mt-4 border border-red-300 bg-red-50 rounded-lg p-3 mb-4 text-red-800 flex flex-col items-center shadow-md animate-fade-in">
+      <div className="flex items-center mb-2">
+        <svg className="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <span className="font-bold text-xl">Unable to Start Ride</span>
+        <span className="font-bold text-xs">Unable to Start Ride</span>
       </div>
-      <div className="w-full space-y-4">
-        <p className="text-center text-red-700">
+      <div className="w-full space-y-3">
+        <p className="text-center text-xs text-red-700">
           {rideStateData.status.lastError === 'ACCOUNT_NOT_FOUND'
             ? 'We couldn\'t find an account with that email address.'
             : 'We couldn\'t find an account with that email address.'}
@@ -66,7 +66,7 @@ export const WorkflowFailureDisplay: React.FC<WorkflowFailureDisplayProps> = ({
           <input
             type="email"
             placeholder="Try another email address"
-            className="input input-bordered w-full p-3 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-800"
+            className="input input-bordered w-full p-2 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-gray-800 text-sm"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -76,12 +76,12 @@ export const WorkflowFailureDisplay: React.FC<WorkflowFailureDisplayProps> = ({
             disabled={isRetrying}
           />
           {emailError && (
-            <p className="text-red-500 text-sm mt-1">{emailError}</p>
+            <p className="text-red-500 text-xs mt-1">{emailError}</p>
           )}
         </div>
 
         <button
-          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+          className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-3 rounded-md shadow-md transition-all duration-200 hover:shadow-lg disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-sm"
           onClick={() => {
             const validation = validateEmail(email);
             if (validation.isValid) {

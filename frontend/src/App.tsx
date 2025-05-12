@@ -9,7 +9,7 @@ function RidePageLayout() {
 
   return (
     <div className="flex-1 flex overflow-hidden">
-      <aside className="w-96 bg-white border-r p-4">
+      <aside className="w-72 bg-white border-r">
         {/* Pass workflowIdFromUrl and navigate to Hud */}
         {/* We will adapt Hud later to accept these props */}
         <Hud workflowIdFromUrl={workflowIdFromUrl} navigate={navigate} />
@@ -23,15 +23,15 @@ function RidePageLayout() {
 
 export default function App() {
   return (
-    <div className="flex flex-col h-screen bg-slate-100">
-      <header className="flex flex-col items-center py-4 bg-white border-b border-gray-200 shadow-sm">
+    <div className="flex flex-col h-screen bg-slate-100 ">
+      <header className="flex flex-col items-center py-4 bg-white">
         <div className="flex items-center gap-2">
           <span className="text-2xl">🛴</span>
-          <Link to="/" className="text-2xl font-bold text-gray-800 tracking-tight" tabIndex={-1}>
+          <Link to="/" className="text-xl font-bold text-gray-800 tracking-tight" tabIndex={-1}>
             Scooter Demo
           </Link>
         </div>
-        <div className="w-full mt-2 border-t border-gray-100" />
+        <div className="w-full mt-1 border-t border-gray-100" />
       </header>
       <main className="flex-1 flex"> {/* Ensure main can fill space for routed content */}
         <Routes>
