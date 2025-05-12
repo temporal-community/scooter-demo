@@ -207,8 +207,8 @@ This starts the Workflow Execution, which bills the user some number
 of tokens for an initial "unlock the scooter" charge and consumes some
 additional number of tokens for each subsequent 15 seconds of use. 
 
-When you are ready to end the ride, click the **End Ride** button in the 
-UI.
+The ride will automatically end after three minutes, but you can click 
+the **End Ride** button in the UI to end it sooner. 
 
 
 ### Network Outage
@@ -267,13 +267,12 @@ succeed upon the next retry attempt.
 
 
 ### Ride Awaits Approval to Continue (Human-in-the-Loop)
-To prevent riders from incurring excessive charges if they forget to 
-end the ride quickly enough, the Workflow is designed to pause the 
-ride after 70 tokens have been consumed. In order to continue the 
-ride, you must send the `approveRide` Signal to the Workflow Execution
-You can do this by using the Temporal Web UI. If you prefer, you can 
-also use the Temporal CLI, replacing `1000` in the command below with 
-the scooter ID for your ride:
+To prevent riders from incurring excessive charges, the Workflow is 
+designed to pause the ride after 70 tokens have been consumed. In order 
+to continue the ride, you must send the `approveRide` Signal to the Workflow 
+Execution. You can do this with the Temporal Web UI, or if you prefer, 
+by using the Temporal CLI (replace `1000` in the command below with 
+the scooter ID for your ride):
 
 ```bash
 temporal workflow signal --workflow-id scooter-session-1000 --name approveRide
