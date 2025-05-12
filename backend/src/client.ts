@@ -12,7 +12,6 @@ interface EnvWithApiKey extends Env {
 }
 
 async function runWithScooter(env: EnvWithApiKey, scooterId: string, emailAddress: string) {
-  let client: Client;
   let connection: Connection | NativeConnection;
 
   if (env.clientCertPath && env.clientKeyPath) {
@@ -47,14 +46,14 @@ async function runWithScooter(env: EnvWithApiKey, scooterId: string, emailAddres
     connection = await Connection.connect({ address: env.address });
   }
 
-  client = new Client({ connection, namespace: env.namespace });
+  const client = new Client({ connection, namespace: env.namespace });
 
   await runWorkflow(client, env.taskQueue, {
     scooterId,
-	emailAddress,
+        emailAddress,
     customerId: '',  // An Activity fetches this from Stripe, based on email address
     meterName: 'scooter-ride-tq',
-    rideTimeoutSecs: 60 * 60 * 3,   // 3 hours 
+    rideTimeoutSecs: 120,   // 2 minutes default
   });
 }
 

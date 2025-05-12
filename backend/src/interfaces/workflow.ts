@@ -3,16 +3,17 @@
  */
 
 export interface RideDetails {
-    emailAddress: string; // what the user provides to us
-    scooterId: string;
-    customerId?: string;  // what we look up from Stripe (based on the email address)
-    pricePerThousand?: number;  // price per 1000 tokens
-    currency?: string;          // currency code (e.g., 'USD')
+  emailAddress: string; // what the user provides to us
+  scooterId: string;
+  customerId?: string;  // what we look up from Stripe (based on the email address)
+  rideTimeoutSecs?: number;  // maximum ride duration
+  pricePerThousand?: number;  // price per 1000 tokens
+  currency?: string;          // currency code (e.g., 'USD')
 }
 
 export interface RideStatus {
     /** High-level lifecycle */
-    phase: 'INITIALIZING' | 'ACTIVE' | 'BLOCKED' | 'ENDED' | 'FAILED';
+    phase: 'INITIALIZING' | 'ACTIVE' | 'BLOCKED' | 'ENDED' | 'FAILED' | 'TIMED_OUT';
 
     /** Timestamps (ISO 8601) */
     startedAt: string;      // set when BeginRide succeeds

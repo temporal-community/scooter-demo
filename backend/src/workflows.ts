@@ -32,9 +32,10 @@ const TokenConsumptionApprovalLimit = 70;
 
 export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatus> {
   let hasRideEnded = false;
+  let rideTimedOut = false;
   let hasBeenApproved = false;
   let isApprovalRequired = false;
-  let rideStatus: RideStatus = {
+  const rideStatus: RideStatus = {
     phase: 'INITIALIZING',
     startedAt: new Date().toISOString(),
     lastMeterAt: new Date().toISOString(),
@@ -47,7 +48,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
     },
   };
 
-  const {
+  const { 
     FindStripeCustomerID,
     BeginRide,
     PostTimeCharge,
@@ -81,7 +82,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
 
     // Signal handlers
     setHandler(addDistanceSignal, () => {
-      pendingDistances.push(1); // 100 ft per signal
+      pendingDistances.push(1); // 100 ft per signal
       wakeResolver?.();
     });
     setHandler(endRideSignal, () => {
@@ -103,6 +104,12 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
     rideStatus.tokens.total += unlockTokens;
     rideStatus.phase = 'ACTIVE';
     rideStatus.lastMeterAt = new Date().toISOString();
+
+    const rideTimeoutMs = (input.rideTimeoutSecs ?? 120) * 1000;
+    const RIDE_TIMEOUT_EVENT = 'RIDE_TIMEOUT_EVENT';
+    const rideTimeoutPromise: Promise<typeof RIDE_TIMEOUT_EVENT> = sleep(rideTimeoutMs).then(
+      () => RIDE_TIMEOUT_EVENT,
+    );
 
     // ---------------- Core loop ----------------
     const TIMER_EVENT = 'TIMER_EVENT';
@@ -131,6 +138,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
       const event = await Promise.race([
         timerPromise,
         wakePromise.then(() => SIGNAL_EVENT),
+        rideTimeoutPromise,
       ]);
 
       // Prepare next wake promise
@@ -144,6 +152,12 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
         rideStatus.lastMeterAt = new Date().toISOString();
 
         timerPromise = sleep(15_000).then(() => TIMER_EVENT);
+      }
+
+      if (event === RIDE_TIMEOUT_EVENT) {
+        rideTimedOut = true;
+        hasRideEnded = true;
+        break;
       }
 
       if (rideStatus.tokens.total >= TokenConsumptionApprovalLimit && ! hasBeenApproved) {
@@ -173,7 +187,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
     // Activity: End ride
     if (rideStatus.phase === 'ACTIVE' || rideStatus.phase === 'BLOCKED') {
       await EndRide(input);
-      rideStatus.phase = 'ENDED';
+      rideStatus.phase = rideTimedOut ? 'TIMED_OUT' : 'ENDED';
       rideStatus.endedAt = new Date().toISOString();
     }
 
