@@ -53,7 +53,7 @@ async function runWithScooter(env: EnvWithApiKey, scooterId: string, emailAddres
         emailAddress,
     customerId: '',  // An Activity fetches this from Stripe, based on email address
     meterName: 'scooter-ride-tq',
-    rideTimeoutSecs: 120,   // 2 minutes default
+    rideTimeoutSecs: 180,   // 3 minutes default
   });
 }
 

@@ -72,7 +72,7 @@ router.post('/ride/start', asyncHandler(async (req: Request, res: Response, clie
     emailAddress,
     customerId: `cust-${emailAddress.split('@')[0]}`, // Placeholder customerId logic
     meterName: 'scooter-ride-tq', // Example from your client.ts
-    rideTimeoutSecs: 120,  // 3 hours, example from your client.ts
+    rideTimeoutSecs: 180,
     pricePerThousand,
     currency,
   };

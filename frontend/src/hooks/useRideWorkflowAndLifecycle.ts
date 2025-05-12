@@ -193,7 +193,7 @@ export const useRideWorkflowAndLifecycle = (props: UseRideWorkflowAndLifecyclePr
       if (isInitializing) {
         storeSetMovementDisabledMessage('Starting your ride...');
       } else if (serverPhase === 'BLOCKED') {
-        storeSetMovementDisabledMessage('Approve ride signal required to continue');
+        storeSetMovementDisabledMessage('Approval (signal) required within 1 minute to continue ride.');
       } else if (isFailed) {
         // If the phase is FAILED, check for the specific "Activity task failed" error
         if (lastErrorFromApi?.toLowerCase().includes('activity task failed')) {

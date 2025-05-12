@@ -105,7 +105,7 @@ export async function ScooterRideWorkflow(input: RideDetails): Promise<RideStatu
     rideStatus.phase = 'ACTIVE';
     rideStatus.lastMeterAt = new Date().toISOString();
 
-    const rideTimeoutMs = (input.rideTimeoutSecs ?? 120) * 1000;
+    const rideTimeoutMs = (input.rideTimeoutSecs ?? 180) * 1000;
     const RIDE_TIMEOUT_EVENT = 'RIDE_TIMEOUT_EVENT';
     const rideTimeoutPromise: Promise<typeof RIDE_TIMEOUT_EVENT> = sleep(rideTimeoutMs).then(
       () => RIDE_TIMEOUT_EVENT,
