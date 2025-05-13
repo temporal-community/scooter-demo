@@ -5,6 +5,7 @@ process.env.STRIPE_API_KEY = 'test-key';
 
 // Fake Stripe client used for tests
 class FakeStripe {
+  public events: number[] = [];
   public customers = {
     search: async ({ query }: { query: string }) => {
       const email = /email:'([^']+)'/.exec(query)?.[1];
@@ -16,7 +17,12 @@ class FakeStripe {
   };
   public billing = {
     meterEvents: {
-      create: async () => {
+      create: async ({ payload }: { payload: { value: string } }) => {
+        // Record event value for assertions
+        const val = Number(payload.value);
+        if (!isNaN(val)) {
+          fakeStripe.events.push(val);
+        }
         return {};
       },
     },
@@ -34,7 +40,8 @@ const {
   __test,
 } = activities as typeof activities & { __test: { setStripeClient(client: any): void } };
 
-__test.setStripeClient(new FakeStripe());
+const fakeStripe = new FakeStripe();
+__test.setStripeClient(fakeStripe);
 
 describe('activities', () => {
   it('FindStripeCustomerID returns customer id', async () => {
@@ -82,5 +89,14 @@ describe('activities', () => {
     await env.run(EndRide, { customerId: 'c', emailAddress: '', scooterId: '' });
     assert.equal(t, 2);
     assert.equal(d, 5);
+  });
+
+  it('records meter events for each charge', async () => {
+    const localEnv = new MockActivityEnvironment();
+    fakeStripe.events = [];
+    await localEnv.run(BeginRide, { emailAddress: 'u', scooterId: '1230', customerId: 'c' });
+    await localEnv.run(PostTimeCharge, { customerId: 'c', emailAddress: '', scooterId: '' });
+    await localEnv.run(PostDistanceCharge, { customerId: 'c', emailAddress: '', scooterId: '' });
+    assert.deepEqual(fakeStripe.events, [10, 2, 5]);
   });
 });

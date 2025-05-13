@@ -8,6 +8,8 @@ import {
   addDistanceSignal,
   endRideSignal,
   approveRideSignal,
+  tokensConsumedQuery,
+  getRideDetailsQuery,
 } from '../src/workflows';
 import type { RideDetails } from '../src/interfaces/workflow';
 import * as activitiesFile from '../src/activities';
@@ -130,5 +132,39 @@ describe('ScooterRideWorkflow', function () {
     });
     assert.equal(result.phase, 'ENDED');
     assert.ok(result.tokens.total >= 70);
+  });
+
+  it('provides progress via queries', async () => {
+    await runWithWorker(async (taskQueue) => {
+      const handle = await env.client.workflow.start(ScooterRideWorkflow, {
+        args: [{ scooterId: '3001', emailAddress: 'good@example.com', rideTimeoutSecs: 60 }],
+        taskQueue,
+        workflowId: `wf-${uuid()}`,
+      });
+      await handle.signal(addDistanceSignal);
+      await env.sleep('16s');
+      const tokens = await handle.query(tokensConsumedQuery as any);
+      assert.equal(tokens, 10 + 5 + 2);
+      const details = (await handle.query(getRideDetailsQuery as any)) as { status: { distanceFt: number } };
+      assert.equal(details.status.distanceFt, 100);
+      await handle.signal(endRideSignal);
+      await handle.result();
+    });
+  });
+
+  it('times out when approval not received', async () => {
+    const result = await runWithWorker(async (taskQueue) => {
+      const handle = await env.client.workflow.start(ScooterRideWorkflow, {
+        args: [{ scooterId: '3000', emailAddress: 'good@example.com', rideTimeoutSecs: 200 }],
+        taskQueue,
+        workflowId: `wf-${uuid()}`,
+      });
+      for (let i = 0; i < 15; i++) {
+        await handle.signal(addDistanceSignal);
+      }
+      await env.sleep('70s');
+      return handle.result();
+    });
+    assert.equal(result.phase, 'TIMED_OUT');
   });
 });

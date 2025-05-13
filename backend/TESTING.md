@@ -4,6 +4,10 @@ The backend uses **Mocha** together with Temporal's `@temporalio/testing` packag
 Tests start an in-memory Temporal test server and exercise the
 `ScooterRideWorkflow` and its Activities.
 
+For additional context and examples see
+[typescript-testing-guide.md](./typescript-testing-guide.md) from the Temporal
+documentation.
+
 ## Install dependencies
 
 ```
