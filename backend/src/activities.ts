@@ -6,7 +6,7 @@ const stripeApiKey = process.env['STRIPE_API_KEY'];
 if (!stripeApiKey) {
   throw new ReferenceError(`STRIPE_API_KEY environment variable is not defined`);
 }
-const stripe = new Stripe(stripeApiKey, {
+let stripe: Stripe = new Stripe(stripeApiKey, {
   apiVersion: '2025-04-30.preview' as any,
 });
 
@@ -98,3 +98,10 @@ export class CustomerNotFoundException extends Error {
     this.name = CustomerNotFoundException.name;
   }
 }
+
+// Helper exported for unit tests to replace the Stripe client
+export const __test = {
+  setStripeClient(client: any) {
+    stripe = client;
+  },
+};

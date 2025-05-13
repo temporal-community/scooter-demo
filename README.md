@@ -96,6 +96,8 @@ Finally, start the Temporal Worker for the backend:
 npm run start
 ```
 
+To run the backend unit tests, see [`backend/TESTING.md`](backend/TESTING.md).
+
 ### Run the Application API
 
 Open another terminal and change to the `api` directory. 

@@ -5,8 +5,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "rootDir": "./src",
-    "outDir": "./lib"
+    "rootDir": "./", // Set rootDir to the project root
+    "outDir": "./lib",
+    "types": ["mocha"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }
