@@ -1,7 +1,7 @@
 // Purpose: Displays the ride summary after a ride ends.
 import React from 'react';
-import { Stat, BreakdownStat } from './StatComponents'; // Adjust path as needed
-import type { RideStateResponse } from '../../api/rideApi'; // Adjust path as needed
+import { Stat, BreakdownStat } from './StatComponents.tsx';
+import type { RideStateResponse } from '../../api/rideApi.ts';
 
 interface RideSummaryDisplayProps {
   showSummary: boolean;

@@ -151,6 +151,21 @@ The app should now be available at `http://localhost:5173`, although
 it may use a different port number if that one is already in use. 
 You can navigate to the URL it displays to begin the demo.
 
+### Running Tests
+
+Each component has its own test suite that can be run independently:
+
+- Frontend: `cd frontend && npm test`
+- API: `cd api && npm test`
+- Backend: `cd backend && npm test`
+
+Alternatively, you can run all tests in sequence using the provided script:
+
+```bash
+./run-all-tests.sh
+```
+
+This will execute all test suites and provide a summary of results.
 
 
 ## Why Temporal?
@@ -173,7 +188,7 @@ This is a natural fit for Temporal due to several key advantages:
   time limit (e.g., to limit charges associated with abandoned scooters). 
   This capability is built into Temporal and does not require cron jobs, 
   external schedulers, or separate infrastructure.
-* **Exactly-once billing**: thanks to Temporal’s built-in retry semantics
+* **Exactly-once billing**: thanks to Temporal's built-in retry semantics
   and idempotency built into the application, failures do not result in
   duplicated calls to Stripe's Billing API. 
 * **Operational simplicity**: Temporal workflows encapsulate the full 

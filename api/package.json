@@ -6,8 +6,9 @@
     "scripts": {
       "build": "tsc --build",
       "start": "node lib/index.js",
-      "dev": "nodemon src/index.ts",
-      "lint": "eslint . --ext .ts"
+    "dev": "nodemon src/index.ts",
+    "lint": "eslint . --ext .ts",
+    "test": "node ../backend/node_modules/mocha/bin/mocha --timeout 5000 --require ts-node/register test/**/*.test.js"
     },
     "keywords": [
       "temporal",
