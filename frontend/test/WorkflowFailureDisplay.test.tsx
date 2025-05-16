@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { WorkflowFailureDisplay } from '../src/components/Hud/WorkflowFailureDisplay';
+import { WorkflowFailureDisplay } from '../src/components/Hud/WorkflowFailureDisplay.tsx';
 
 describe('WorkflowFailureDisplay', () => {
   const baseData = {

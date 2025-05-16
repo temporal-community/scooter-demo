@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { render, screen } from '@testing-library/react';
-import { ErrorMessageDisplay } from '../src/components/Hud/ErrorMessage';
+import { ErrorMessageDisplay } from '../src/components/Hud/ErrorMessage.tsx';
 
 describe('ErrorMessageDisplay', () => {
   it('renders nothing when message is null', () => {

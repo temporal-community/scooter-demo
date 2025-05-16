@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { render, screen } from '@testing-library/react';
-import { LiveStatsDisplay } from '../src/components/Hud/LiveStatsDisplay';
-import type { RideStateResponse } from '../src/api/rideApi';
+import { LiveStatsDisplay } from '../src/components/Hud/LiveStatsDisplay.tsx';
+import type { RideStateResponse } from '../src/api/rideApi.ts';
 
 describe('LiveStatsDisplay', () => {
   const baseData: RideStateResponse = {

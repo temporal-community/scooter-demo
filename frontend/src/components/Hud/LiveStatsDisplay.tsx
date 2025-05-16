@@ -1,7 +1,7 @@
 // frontend/src/components/Hud/LiveStatsDisplay.tsx
 import React from 'react';
-import { Stat, BreakdownStat } from './StatComponents'; // Adjust path as needed
-import type { RideStateResponse } from '../../api/rideApi'; // Adjust path as needed
+import { Stat, BreakdownStat } from './StatComponents.tsx';
+import type { RideStateResponse } from '../../api/rideApi.ts';
 
 interface LiveStatsDisplayProps {
   rideStateData: RideStateResponse | null | undefined;

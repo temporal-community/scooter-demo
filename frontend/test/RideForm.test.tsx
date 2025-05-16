@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { RideForm } from '../src/components/Hud/RideForm';
+import { RideForm } from '../src/components/Hud/RideForm.tsx';
 
 describe('RideForm', () => {
   const defaultProps = {

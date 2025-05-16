@@ -1,7 +1,8 @@
-import 'jsdom-global/register';
-import { afterEach } from 'mocha';
+import 'jsdom-global/register.js';
 import { cleanup } from '@testing-library/react';
 
-afterEach(() => {
-  cleanup();
-});
+export const mochaHooks = {
+  afterEach() {
+    cleanup();
+  }
+};
