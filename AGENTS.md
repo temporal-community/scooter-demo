@@ -43,6 +43,11 @@
   npm run test.watch  # watch for changes
   npm run test.coverage  # coverage report
   ```
+- API and Frontend tests also use Mocha.
+- To run all tests in sequence, use the provided script:
+  ```bash
+  ./run-all-tests.sh  # runs frontend, API, and backend tests
+  ```
 
 ## Linting
 - Run `npm run lint` in `api` and `backend`.
