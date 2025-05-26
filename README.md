@@ -191,7 +191,7 @@ This is a natural fit for Temporal due to several key advantages:
 * **Exactly-once billing**: thanks to Temporal's built-in retry semantics
   and idempotency built into the application, failures do not result in
   duplicated calls to Stripe's Billing API. 
-* **Operational simplicity**: Temporal workflows encapsulate the full 
+* **Operational simplicity**: Temporal Workflows encapsulate the full 
   lifecycle of the ride, using clear business logic expressed in code. 
   The Temporal Web UI provides observability, enabling you to see the
   current state and progress for each ride, regardless of whether they 
