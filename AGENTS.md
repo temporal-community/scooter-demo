@@ -4,7 +4,7 @@
 - `backend` - Temporal Worker and Activities for ride management. Contains automated tests in `test/`.
 - `api` - Node.js API that exposes endpoints to interact with Temporal workflows.
 - `frontend` - Browser-based UI built with React and Phaser.
-- `docs` - Additional documentation such as `stripe-setup.md`.
+- `docs` - Additional documentation, such as `stripe-setup.md`.
 
 ## Running the Application
 1. Start a local Temporal service:
