@@ -1,6 +1,6 @@
 # Running API Tests
 
-The API uses **Mocha** for testing the Express routes and Temporal client interactions.
+The API uses **Mocha** for testing the Express routes and Temporal Client interactions.
 
 ## Install dependencies
 
