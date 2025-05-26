@@ -7,7 +7,7 @@
 - `docs` - Additional documentation, such as `stripe-setup.md`.
 
 ## Running the Application
-1. Start a local Temporal service:
+1. Start a local Temporal Service:
    ```bash
    temporal server start-dev
    ```
