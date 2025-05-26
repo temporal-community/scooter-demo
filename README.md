@@ -159,7 +159,7 @@ Each component has its own test suite that can be run independently:
 - API: `cd api && npm test`
 - Backend: `cd backend && npm test`
 
-Alternatively, you can run all tests in sequence using the provided script:
+Alternatively, you can run all tests in sequence using the provided Bash script:
 
 ```bash
 ./run-all-tests.sh
