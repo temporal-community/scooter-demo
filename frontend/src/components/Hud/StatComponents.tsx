@@ -17,14 +17,18 @@ export function Stat({ label, value }: StatProps) {
 interface BreakdownStatProps {
   label: string;
   value: string;
+  cost?: string;
   bold?: boolean;
 }
 
-export function BreakdownStat({ label, value, bold }: BreakdownStatProps) {
+export function BreakdownStat({ label, value, cost, bold }: BreakdownStatProps) {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex justify-between items-start">
       <span className={`text-gray-600 text-xs ${bold ? 'font-bold' : ''}`}>{label}</span>
-      <span className={`text-gray-900 font-mono text-sm ${bold ? 'font-bold' : ''}`}>{value}</span>
+      <div className="text-right">
+        <span className={`text-gray-900 font-mono text-sm ${bold ? 'font-bold' : ''}`}>{value}</span>
+        {cost && <div className="text-[10px] text-gray-500 leading-tight">{cost}</div>}
+      </div>
     </div>
   );
 }
