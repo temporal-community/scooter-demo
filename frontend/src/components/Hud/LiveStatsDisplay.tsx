@@ -64,11 +64,56 @@ export const LiveStatsDisplay: React.FC<LiveStatsDisplayProps> = ({
         <div className="mt-3 bg-gray-50 border border-gray-100 rounded-md p-2">
           <h4 className="text-xs font-medium text-gray-600 mb-1 text-center">Token Breakdown</h4>
           <div className="space-y-0.5">
-            <BreakdownStat label="Unlock fee" value={rideStateData.status.tokens.unlock?.toString() ?? "0"} />
-            <BreakdownStat label="Ride time" value={rideStateData.status.tokens.time?.toString() ?? "0"} />
-            <BreakdownStat label="Distance" value={rideStateData.status.tokens.distance?.toString() ?? "0"} />
+            <BreakdownStat
+              label="Unlock fee"
+              value={rideStateData.status.tokens.unlock?.toString() ?? "0"}
+              cost={
+                typeof rideStateData.pricePerThousand === 'number'
+                  ? `${rideStateData.currency} ${(
+                      (rideStateData.status.tokens.unlock * rideStateData.pricePerThousand) /
+                      1000
+                    ).toFixed(2)}`
+                  : undefined
+              }
+            />
+            <BreakdownStat
+              label="Ride time"
+              value={rideStateData.status.tokens.time?.toString() ?? "0"}
+              cost={
+                typeof rideStateData.pricePerThousand === 'number'
+                  ? `${rideStateData.currency} ${(
+                      (rideStateData.status.tokens.time * rideStateData.pricePerThousand) /
+                      1000
+                    ).toFixed(2)}`
+                  : undefined
+              }
+            />
+            <BreakdownStat
+              label="Distance"
+              value={rideStateData.status.tokens.distance?.toString() ?? "0"}
+              cost={
+                typeof rideStateData.pricePerThousand === 'number'
+                  ? `${rideStateData.currency} ${(
+                      (rideStateData.status.tokens.distance * rideStateData.pricePerThousand) /
+                      1000
+                    ).toFixed(2)}`
+                  : undefined
+              }
+            />
             <div className="border-t border-gray-200 my-1"></div>
-            <BreakdownStat label="Total" value={rideStateData.status.tokens.total?.toString() ?? "0"} bold />
+            <BreakdownStat
+              label="Total"
+              value={rideStateData.status.tokens.total?.toString() ?? "0"}
+              cost={
+                typeof rideStateData.pricePerThousand === 'number'
+                  ? `${rideStateData.currency} ${(
+                      (rideStateData.status.tokens.total * rideStateData.pricePerThousand) /
+                      1000
+                    ).toFixed(2)}`
+                  : undefined
+              }
+              bold
+            />
             {rideStateData && // rideStateData itself should be checked here too
               typeof rideStateData.pricePerThousand === 'number' &&
               typeof rideStateData.currency === 'string' && (

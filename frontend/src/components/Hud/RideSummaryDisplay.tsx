@@ -57,19 +57,51 @@ export const RideSummaryDisplay: React.FC<RideSummaryDisplayProps> = ({
               <BreakdownStat
                 label="Unlock fee"
                 value={rideStateData?.status?.tokens?.unlock?.toString() ?? "0"}
+                cost={
+                  typeof rideStateData?.pricePerThousand === 'number'
+                    ? `${rideStateData.currency} ${(
+                        ((rideStateData.status.tokens.unlock || 0) * rideStateData.pricePerThousand) /
+                        1000
+                      ).toFixed(2)}`
+                    : undefined
+                }
               />
               <BreakdownStat
                 label="Ride time"
                 value={rideStateData?.status?.tokens?.time?.toString() ?? "0"}
+                cost={
+                  typeof rideStateData?.pricePerThousand === 'number'
+                    ? `${rideStateData.currency} ${(
+                        ((rideStateData.status.tokens.time || 0) * rideStateData.pricePerThousand) /
+                        1000
+                      ).toFixed(2)}`
+                    : undefined
+                }
               />
               <BreakdownStat
                 label="Distance"
                 value={rideStateData?.status?.tokens?.distance?.toString() ?? "0"}
+                cost={
+                  typeof rideStateData?.pricePerThousand === 'number'
+                    ? `${rideStateData.currency} ${(
+                        ((rideStateData.status.tokens.distance || 0) * rideStateData.pricePerThousand) /
+                        1000
+                      ).toFixed(2)}`
+                    : undefined
+                }
               />
               <div className={`border-t my-2 ${isTimedOut ? 'border-orange-200' : 'border-green-200'}`}></div>
               <BreakdownStat
                 label="Total"
                 value={rideStateData?.status?.tokens?.total?.toString() ?? "0"}
+                cost={
+                  typeof rideStateData?.pricePerThousand === 'number'
+                    ? `${rideStateData.currency} ${(
+                        ((rideStateData.status.tokens.total || 0) * rideStateData.pricePerThousand) /
+                        1000
+                      ).toFixed(2)}`
+                    : undefined
+                }
                 bold
               />
               {rideStateData?.status?.tokens?.total &&
