@@ -1,7 +1,7 @@
 # Temporal ridesharing demo application
 This repository contains code for a ridesharing demo application that 
 highlights Temporal's durability and support for external interactions.
-It's implemented in TypeScript and integrates with Stripe's 
+It's implemented in TypeScript and integrates with 
 [Stripe's usage-based billing](https://docs.stripe.com/billing/subscriptions/usage-based).
 Want to see it in action? Check out this demonstration from the Stripe 
 Sessions conference (the demo starts at 13:09):
