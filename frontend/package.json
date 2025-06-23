@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "TS_NODE_PROJECT=tsconfig.app.json NODE_OPTIONS='--loader ts-node/esm' mocha --require ./test/setup.ts \"test/**/*.test.tsx\""
+    "test": "TS_NODE_PROJECT=tsconfig.app.json NODE_OPTIONS='--loader ts-node/esm --no-experimental-require-module' mocha --file ./test/setup.js \"test/**/*.test.tsx\""
   },
   "dependencies": {
     "@tanstack/react-query": "^5.75.4",
