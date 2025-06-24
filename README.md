@@ -30,7 +30,7 @@ There are five steps to running the application:
 
 
 ### Set Up Usage-Based Billing in Stripe
-See ([this document](docs/stripe-setup.md) for step-by-step instructions 
+See [this document](docs/stripe-setup.md) for step-by-step instructions 
 for the prerequisite Stripe setup. 
 
 ### Start the Temporal Service
